@@ -90,6 +90,11 @@ public class ClientTester {
 			myClient.execute("/SpanBottleneck");
 		}
 
+		logger.info("***** generate Error Hotspot insight *****");
+		for (int ix = 1; ix <= 2; ix++) {
+			myClient.execute("/ErrorHotspot", false);
+		}
+
 		logger.info("***** generate high usage insight *****");
 		for (int ix = 1; ix <= 400; ix++) {
 			myClient.execute("/HighUsage");

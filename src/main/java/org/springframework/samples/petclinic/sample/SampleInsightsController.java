@@ -39,6 +39,28 @@ public class SampleInsightsController {
 		return "highUsage";
 	}
 
+	// it throws RuntimeException - which supposed to raise error hotspot
+	@GetMapping("ErrorHotspot")
+	public String genErrorHotspot() {
+		method1();
+		return "ErrorHotspot";
+	}
+
+	@WithSpan
+	private void method1() {
+		method2();
+	}
+
+	@WithSpan
+	private void method2() {
+		method3();
+	}
+
+	@WithSpan
+	private void method3() {
+		throw new RuntimeException("Some unexpected runtime exception");
+	}
+
 	private static void delay(long millis) {
 		try {
 			Thread.sleep(millis);
