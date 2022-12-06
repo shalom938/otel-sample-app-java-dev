@@ -1,14 +1,34 @@
 package org.springframework.samples.petclinic.sample;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Context;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.opentelemetry.instrumentation.api.instrumenter.LocalRootSpan;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.samples.petclinic.system.AppException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.PostConstruct;
+
 @RestController
 @RequestMapping("/SampleInsights")
 public class SampleInsightsController {
+
+	@Autowired
+	private OpenTelemetry openTelemetry;
+
+	private Tracer otelTracer;
+
+	@PostConstruct
+	public void init() {
+		this.otelTracer = openTelemetry.getTracer("SampleInsightsController");
+	}
 
 	@GetMapping("/SpanBottleneck")
 	public String genSpanBottleneck() {
@@ -59,6 +79,49 @@ public class SampleInsightsController {
 	@WithSpan
 	private void method3() {
 		throw new RuntimeException("Some unexpected runtime exception");
+	}
+
+	@GetMapping("ErrorRecordedOnDeeplyNestedSpan")
+	public String genErrorRecordedOnDeeplyNestedSpan() {
+		methodThatRecordsError();
+		return "ErrorRecordedOnDeeplyNestedSpan";
+	}
+
+	private void methodThatRecordsError() {
+		Span span = otelTracer.spanBuilder("going-to-record-error").startSpan();
+
+		try {
+			throw new AppException("some message");
+		} catch (AppException e) {
+			span.recordException(e);
+			span.setStatus(StatusCode.ERROR);
+		} finally {
+			span.end();
+		}
+	}
+
+	@GetMapping("ErrorRecordedOnCurrentSpan")
+	public String genErrorRecordedOnCurrentSpan() {
+		Span span = Span.current();
+		try {
+			throw new AppException("on current span");
+		} catch (AppException e) {
+			span.recordException(e);
+			span.setStatus(StatusCode.ERROR);
+		}
+		return "ErrorRecordedOnCurrentSpan";
+	}
+
+	@GetMapping("ErrorRecordedOnLocalRootSpan")
+	public String genErrorRecordedOnLocalRootSpan() {
+		Span span = LocalRootSpan.current();
+		try {
+			throw new AppException("on local root span");
+		} catch (AppException e) {
+			span.recordException(e);
+			span.setStatus(StatusCode.ERROR);
+		}
+		return "ErrorRecordedOnLocalRootSpan";
 	}
 
 	private static void delay(long millis) {
