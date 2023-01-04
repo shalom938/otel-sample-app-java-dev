@@ -30,11 +30,19 @@ After cloning this project to your machine, run the following command in order t
 ./gradlew bootJar
 ```
 
+#### There are to options to run the application.
+
+##### Option 1. Via docker which includes the App and Collector
+
 Run the application and the collector with docker compose
 
 ```shell
 docker-compose up --build
 ```
+
+##### Option 2. Via "Run Configurations"
+
+Choose "PetClinic - with OTEL agent + Digma extension" and run it
 
 ### Use the application automatically with ClientTester
 
