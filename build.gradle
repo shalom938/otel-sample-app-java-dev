@@ -1,6 +1,6 @@
 plugins {
-  id 'org.springframework.boot' version '2.7.6'
-  id 'io.spring.dependency-management' version '1.1.0'
+  id 'org.springframework.boot' version '3.0.0'
+  id 'io.spring.dependency-management' version '1.0.13.RELEASE'
   id 'java'
   id 'de.undercouch.download' version '4.1.1'
 }
@@ -8,8 +8,8 @@ plugins {
 apply plugin: 'java'
 
 group = 'org.springframework.samples'
-version = '2.7.6-withagent'
-sourceCompatibility = '11'
+version = '3.0.0'
+sourceCompatibility = '17'
 
 def OPENTELEMETRY_VERSION = '1.20.1'
 
@@ -31,12 +31,13 @@ dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-web'
   implementation 'org.springframework.boot:spring-boot-starter-validation'
   implementation 'javax.cache:cache-api'
+  implementation 'jakarta.xml.bind:jakarta.xml.bind-api'
   runtimeOnly 'org.springframework.boot:spring-boot-starter-actuator'
   runtimeOnly "org.webjars.npm:bootstrap:${webjarsBootstrapVersion}"
   runtimeOnly "org.webjars.npm:font-awesome:${webjarsFontawesomeVersion}"
-  runtimeOnly 'org.ehcache:ehcache'
+  runtimeOnly 'com.github.ben-manes.caffeine:caffeine'
   runtimeOnly 'com.h2database:h2'
-  runtimeOnly 'mysql:mysql-connector-java'
+  runtimeOnly 'com.mysql:mysql-connector-j'
   runtimeOnly 'org.postgresql:postgresql'
   developmentOnly 'org.springframework.boot:spring-boot-devtools'
   testImplementation 'org.springframework.boot:spring-boot-starter-test'
