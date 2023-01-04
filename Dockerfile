@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11-jre
+FROM eclipse-temurin:17-jre
 
 ADD build/libs/spring-petclinic-*.jar /app.jar
 ADD build/otel/opentelemetry-javaagent.jar /opentelemetry-javaagent.jar
