@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+
 @RestController
 @RequestMapping("/SampleInsights")
 public class SampleInsightsController implements InitializingBean {
@@ -120,6 +122,12 @@ public class SampleInsightsController implements InitializingBean {
 			span.setStatus(StatusCode.ERROR);
 		}
 		return "ErrorRecordedOnLocalRootSpan";
+	}
+
+	// using RequestMapping as sanity check for digma version 0.5.32
+	@RequestMapping(value = "req-map-get", method = GET)
+	public String reqMapOfGet() {
+		return "Welcome";
 	}
 
 	private static void delay(long millis) {

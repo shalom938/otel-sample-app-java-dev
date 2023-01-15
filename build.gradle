@@ -11,7 +11,8 @@ group = 'org.springframework.samples'
 version = '3.0.0'
 sourceCompatibility = '17'
 
-def OPENTELEMETRY_VERSION = '1.20.1'
+def OPENTELEMETRY_VERSION = '1.22.1'
+def DIGMA_EXTENSION_VERSION = '0.5.32'
 
 repositories {
   mavenLocal()
@@ -75,7 +76,7 @@ task downloadOtelAgent(type: Download) {
 
 // Download the Digma OpenTelemetry agent extension and put it in the build directory
 task downloadDigmaAgentExtension(type: Download) {
-    src "https://s01.oss.sonatype.org/content/repositories/releases/io/github/digma-ai/digma-otel-agent-extension/0.5.30/digma-otel-agent-extension-0.5.30.jar"
+    src "https://s01.oss.sonatype.org/content/repositories/releases/io/github/digma-ai/digma-otel-agent-extension/${DIGMA_EXTENSION_VERSION}/digma-otel-agent-extension-${DIGMA_EXTENSION_VERSION}.jar"
     dest project.buildDir.toString() + "/otel/digma-otel-agent-extension.jar"
     overwrite true
 }

@@ -100,6 +100,11 @@ public class ClientTester {
 			myClient.execute("/HighUsage");
 		}
 
+		logger.info("***** calling /req-map-get *****");
+		for (int ix = 1; ix <= 2; ix++) {
+			myClient.execute("/req-map-get");
+		}
+
 		logger.info("***** calling ErrorRecordedOnDeeplyNestedSpan *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/ErrorRecordedOnDeeplyNestedSpan");
