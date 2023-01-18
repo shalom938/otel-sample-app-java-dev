@@ -59,7 +59,19 @@ task runClientTester(type: JavaExec) {
     group = "Execution"
     description = "Run Client Tester"
     classpath = sourceSets.main.runtimeClasspath
-    main = 'petclinic.client.ClientTester'
+    mainClass = 'petclinic.client.ClientTester'
+}
+
+// running with agent, will instrument HTTP client calls with library named io.opentelemetry.okhttp-3.0
+task runClientTesterWithAgent(type: JavaExec) {
+    group = "Execution"
+    description = "Run Client Tester"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'petclinic.client.ClientTester'
+    jvmArgs("-javaagent:build/otel/opentelemetry-javaagent.jar")
+    systemProperty("otel.service.name", "ClientTesterOfPetClinic")
+    systemProperty("otel.traces.exporter", "otlp")
+    systemProperty("otel.exporter.otlp.traces.endpoint", "http://localhost:5050")
 }
 
 bootJar {

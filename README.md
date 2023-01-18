@@ -52,6 +52,14 @@ Run the following command in order to run ClientTester, which will access the ap
 ./gradlew runClientTester
 ```
 
+### Use the application automatically with ClientTester
+
+Similar to runClientTester but will also use the OTEL agent which will instrument the HTTP Client calls 
+
+```shell
+./gradlew runClientTesterWithAgent
+```
+
 ### Use the application Manually
 
 Browse to [Local PetClinic](http://localhost:9753/) and use the application freely.
