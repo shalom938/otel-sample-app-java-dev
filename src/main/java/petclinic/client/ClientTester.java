@@ -95,6 +95,12 @@ public class ClientTester {
 			myClient.execute("/ErrorHotspot", false);
 		}
 
+		logger.info("***** generate N-Plus-One insight *****");
+		for (int ix = 1; ix <= 2; ix++) {
+			myClient.execute("/NPlusOneWithInternalSpan");
+			myClient.execute("/NPlusOneWithoutInternalSpan");
+		}
+
 		logger.info("***** generate high usage insight *****");
 		for (int ix = 1; ix <= 400; ix++) {
 			myClient.execute("/HighUsage");

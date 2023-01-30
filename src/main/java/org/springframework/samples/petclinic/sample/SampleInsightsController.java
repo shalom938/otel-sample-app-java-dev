@@ -2,6 +2,7 @@ package org.springframework.samples.petclinic.sample;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
@@ -128,6 +129,45 @@ public class SampleInsightsController implements InitializingBean {
 	@RequestMapping(value = "req-map-get", method = GET)
 	public String reqMapOfGet() {
 		return "Welcome";
+	}
+
+
+	@GetMapping("NPlusOneWithoutInternalSpan")
+	public String genNPlusOneWithoutInternalSpan() {
+		for (int i = 0; i < 100; i++) {
+			DbQuery();
+		}
+		return "genNPlusOneWithoutInternalSpan";
+	}
+
+	@GetMapping("NPlusOneWithInternalSpan")
+	public String genNPlusOneWithInternalSpan() {
+		Span span = otelTracer.spanBuilder("db_access_01").startSpan();
+
+		try {
+			for (int i = 0; i < 100; i++) {
+				DbQuery();
+			}
+		} finally {
+			span.end();
+		}
+		return "genNPlusOneWithInternalSpan";
+	}
+
+	private void DbQuery() {
+		// simulate SpanKind of DB query
+		// see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
+		Span span = otelTracer.spanBuilder("query_users_by_id")
+			.setSpanKind(SpanKind.CLIENT)
+			.setAttribute("db.system", "other_sql")
+			.setAttribute("db.statement", "select * from users where id = :id")
+			.startSpan();
+
+		try {
+			//delay(1);
+		} finally {
+			span.end();
+		}
 	}
 
 	private static void delay(long millis) {
