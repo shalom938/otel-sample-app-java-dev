@@ -12,7 +12,6 @@ version = '3.0.0'
 sourceCompatibility = '17'
 
 def OPENTELEMETRY_VERSION = '1.22.1'
-def DIGMA_EXTENSION_VERSION = '0.5.32'
 
 repositories {
   mavenLocal()
@@ -81,6 +80,7 @@ bootJar {
 
 // Download the OpenTelemetry java agent and put it in the build directory
 task downloadOtelAgent(type: Download) {
+    // otel agent version is 1.22.1
     src "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar"
     dest project.buildDir.toString() + "/otel/opentelemetry-javaagent.jar"
     overwrite true
@@ -88,7 +88,8 @@ task downloadOtelAgent(type: Download) {
 
 // Download the Digma OpenTelemetry agent extension and put it in the build directory
 task downloadDigmaAgentExtension(type: Download) {
-    src "https://s01.oss.sonatype.org/content/repositories/releases/io/github/digma-ai/digma-otel-agent-extension/${DIGMA_EXTENSION_VERSION}/digma-otel-agent-extension-${DIGMA_EXTENSION_VERSION}.jar"
+    // digma extension version is 0.6.12
+    src "https://github.com/digma-ai/otel-java-instrumentation/releases/latest/download/digma-otel-agent-extension.jar"
     dest project.buildDir.toString() + "/otel/digma-otel-agent-extension.jar"
     overwrite true
 }
