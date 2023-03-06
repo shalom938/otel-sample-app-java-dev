@@ -6,7 +6,7 @@ receivers:
 
 exporters:
   logging:
-    logLevel: DEBUG
+    verbosity: detailed
 
   otlp/collector4317:
     endpoint: "host.docker.internal:4317"
