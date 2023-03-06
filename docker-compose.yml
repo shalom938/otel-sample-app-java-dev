@@ -17,7 +17,7 @@ services:
       - collector
 
   collector:
-    image: otel/opentelemetry-collector-contrib:0.66.0
+    image: otel/opentelemetry-collector-contrib:0.72.0
     volumes:
       - ./otel-config.yaml:/otel-config.yaml
     command: ["--config=/otel-config.yaml"]
