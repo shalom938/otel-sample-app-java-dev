@@ -1,23 +1,24 @@
 package petclinic.client;
 
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.ConnectException;
 
 public class ClientTester {
 
 	private static final Logger logger = LoggerFactory.getLogger(ClientTester.class);
-	private static final String BASE_APP_URL = "http://localhost:9753";
+	private static final String BASE_APP_URL = System.getenv("PETSHOP_URL");
 	private static final String BASE_APP_SAMPLE_URL = BASE_APP_URL + "/SampleInsights";
 
 	public static void main(String[] args) {
-		logger.info("Starting...");
+		logger.info("Starting... URL:"+BASE_APP_URL);
+
 		MyClient myClient = new MyClient(BASE_APP_URL);
+
 
 		for (int ix = 1; ix <= 5; ix++) {
 			myClient.execute("/vets.html");
@@ -75,53 +76,54 @@ public class ClientTester {
 		}));
 	}
 
+
+	@WithSpan
 	private static void generateInsightData() {
 		MyClient myClient = new MyClient(BASE_APP_SAMPLE_URL);
 
-		logger.info("***** START generateInsightData *****");
+		logger.info("***** START generating traffic *****");
 
-		logger.info("***** generate slow endpoint insight *****");
+		logger.info("***** Slow traffic *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/SlowEndpoint?extraLatency=2500");
 		}
 
-		logger.info("***** generate bottleneck insight *****");
+		logger.info("***** Triggering bottlenecks *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/SpanBottleneck");
 		}
 
-		logger.info("***** generate Error Hotspot insight *****");
+		logger.info("***** Errors *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/ErrorHotspot", false);
 		}
 
-		logger.info("***** generate N-Plus-One insight *****");
+		logger.info("***** Complex queries *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/NPlusOneWithInternalSpan");
 			myClient.execute("/NPlusOneWithoutInternalSpan");
 		}
 
-		logger.info("***** generate high usage insight *****");
+		logger.info("***** Load and high usage *****");
 		for (int ix = 1; ix <= 400; ix++) {
 			myClient.execute("/HighUsage");
 		}
 
-		logger.info("***** calling /req-map-get *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/req-map-get");
 		}
 
-		logger.info("***** calling ErrorRecordedOnDeeplyNestedSpan *****");
+		logger.info("***** Nested Operations *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/ErrorRecordedOnDeeplyNestedSpan");
 		}
 
-		logger.info("***** calling ErrorRecordedOnLocalRootSpan *****");
+		logger.info("***** Complex errors *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/ErrorRecordedOnLocalRootSpan");
 		}
 
-		logger.info("***** calling ErrorRecordedOnCurrentSpan *****");
+		logger.info("***** Errors records  *****");
 		for (int ix = 1; ix <= 2; ix++) {
 			myClient.execute("/ErrorRecordedOnCurrentSpan");
 		}
@@ -131,22 +133,60 @@ public class ClientTester {
 
 	static class MyClient {
 
-		private final OkHttpClient client;
+		private  OkHttpClient client;
 		private final String baseUrl;
 
 		private MyClient(String baseUrl) {
 			this.baseUrl = baseUrl;
 
 			this.client = new OkHttpClient.Builder()
+				.addInterceptor(new Interceptor() {
+					final int MAXTRIES = 20;
+					final int DELAY_SECONDS = 3;
+					@Override
+					public Response intercept(Chain chain) throws IOException {
+						Request request = chain.request();
+						Response response = null;
+						int tryCount = 0;
+						boolean noException=false;
+
+						while (!noException && tryCount < MAXTRIES) {
+							try {
+								response = chain.proceed(request);
+								noException=true;
+							}catch (Exception e){
+								try {
+									noException=false;
+									logger.info("Waiting for service to be up... Attempt:"+tryCount);
+									response.close();
+
+									Thread.sleep(DELAY_SECONDS*1000);
+								} catch (InterruptedException ex) {
+									throw new RuntimeException(ex);
+								}
+
+							}finally{
+								tryCount++;
+							}
+						}
+
+						// otherwise just pass the original response on
+						return response;
+					}
+				})
 				.build();
+
 		}
 
 		public void execute(String uriPath, boolean throwExceptionWhenCodeIsNot200) {
 			Request request = new Request.Builder()
 				.url(baseUrl + assureStartsWithSlash(uriPath))
+
 				.build();
 
 			Call call = client.newCall(request);
+
+
 			try (Response response = call.execute()) {
 				if (throwExceptionWhenCodeIsNot200) {
 					int code = response.code();

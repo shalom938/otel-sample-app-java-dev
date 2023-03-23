@@ -70,6 +70,7 @@ task runClientTesterWithAgent(type: JavaExec) {
     mainClass = 'petclinic.client.ClientTester'
     jvmArgs("-javaagent:build/otel/opentelemetry-javaagent.jar")
     systemProperty("otel.service.name", "ClientTesterOfPetClinic")
+    environment("PETSHOP_URL", "http://localhost:9753")
     systemProperty("otel.traces.exporter", "otlp")
     systemProperty("otel.exporter.otlp.traces.endpoint", "http://localhost:5050")
 }
@@ -88,7 +89,7 @@ task downloadOtelAgent(type: Download) {
 
 // Download the Digma OpenTelemetry agent extension and put it in the build directory
 task downloadDigmaAgentExtension(type: Download) {
-    src "https://s01.oss.sonatype.org/content/repositories/releases/io/github/digma-ai/digma-otel-agent-extension/${DIGMA_EXTENSION_VERSION}/digma-otel-agent-extension-${DIGMA_EXTENSION_VERSION}.jar"
+    src "https://github.com/digma-ai/otel-java-instrumentation/releases/latest/download/digma-otel-agent-extension.jar"
     dest project.buildDir.toString() + "/otel/digma-otel-agent-extension.jar"
     overwrite true
 }

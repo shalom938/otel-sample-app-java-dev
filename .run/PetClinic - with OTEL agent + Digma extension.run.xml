@@ -1,8 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="PetClinic - with OTEL agent + Digma extension" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="17" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <envs>
-      <env name="OTEL_SERVICE_NAME" value="PetClinicWithAgent" />
       <env name="CODE_PACKAGE_PREFIXES" value="org.springframework.samples.petclinic" />
+      <env name="OTEL_SERVICE_NAME" value="PetClinicWithAgent" />
+      <env name="OTEL_RESOURCE_ATTRIBUTES" value="deployment.environment=Integration,digma.environment=Integration" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="org.springframework.samples.petclinic.PetClinicApplication" />
     <module name="spring-petclinic-otel-with-digma-agent.main" />

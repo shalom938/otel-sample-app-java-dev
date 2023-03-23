@@ -4,26 +4,42 @@ services:
   app:
     build: ./
     environment:
-      OTEL_SERVICE_NAME: "PetClinicWithAgent"
-      OTEL_EXPORTER_OTLP_ENDPOINT: "http://collector:8317"
+      OTEL_SERVICE_NAME: "PetClinic"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://host.docker.internal:5050"
       # Logs are disabled by default
       OTEL_LOGS_EXPORTER: "otlp"
       # Digma entries
       CODE_PACKAGE_PREFIXES: "org.springframework.samples.petclinic"
       DEPLOYMENT_ENV: "SAMPLE_ENV"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9753/" ]
+      interval: 20s
+      timeout: 10s
+      retries: 4
+      start_period: 5s
     ports:
       - "9753:9753"
-    depends_on:
-      - collector
-
-  collector:
-    image: otel/opentelemetry-collector-contrib:0.66.0
-    volumes:
-      - ./otel-config.yaml:/otel-config.yaml
-    command: ["--config=/otel-config.yaml"]
-    expose:
-      - "8317"
-    ports:
-      - "8317:8317"
+    entrypoint: java -jar -javaagent:/opentelemetry-javaagent.jar -Dotel.javaagent.extensions=/digma-otel-agent-extension.jar app.jar
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  tester:
+    build: ./
+    environment:
+      OTEL_SERVICE_NAME: "PetClinicTester"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://host.docker.internal:5050"
+      # Logs are disabled by default
+      OTEL_LOGS_EXPORTER: "otlp"
+      PETSHOP_URL: "http://app:9753"
+      # Digma entries
+      CODE_PACKAGE_PREFIXES: "org.springframework.samples.petclinic"
+      DEPLOYMENT_ENV: "SAMPLE_ENV"
+    entrypoint: java -cp app.jar -Dloader.main=petclinic.client.ClientTester org.springframework.boot.loader.PropertiesLauncher
+    links:
+      - app
+    depends_on:
+      app:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
