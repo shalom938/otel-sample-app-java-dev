@@ -98,8 +98,7 @@ class OwnerController implements InitializingBean {
 	}
 
 	@GetMapping("/owners/find")
-	public String initFindForm(Map<String, Object> model) {
-		model.put("owner", new Owner());
+	public String initFindForm() {
 		return "owners/findOwners";
 	}
 
