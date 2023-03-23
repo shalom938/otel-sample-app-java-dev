@@ -11,14 +11,15 @@ import java.net.ConnectException;
 public class ClientTester {
 
 	private static final Logger logger = LoggerFactory.getLogger(ClientTester.class);
+
 	private static final String BASE_APP_URL = System.getenv("PETSHOP_URL");
+
 	private static final String BASE_APP_SAMPLE_URL = BASE_APP_URL + "/SampleInsights";
 
 	public static void main(String[] args) {
-		logger.info("Starting... URL:"+BASE_APP_URL);
+		logger.info("Starting... URL:" + BASE_APP_URL);
 
 		MyClient myClient = new MyClient(BASE_APP_URL);
-
 
 		for (int ix = 1; ix <= 5; ix++) {
 			myClient.execute("/vets.html");
@@ -70,12 +71,12 @@ public class ClientTester {
 			try {
 				logger.info("Shutting down...");
 				Thread.sleep(567);
-			} catch (InterruptedException e) {
+			}
+			catch (InterruptedException e) {
 				Thread.interrupted();
 			}
 		}));
 	}
-
 
 	@WithSpan
 	private static void generateInsightData() {
@@ -133,59 +134,61 @@ public class ClientTester {
 
 	static class MyClient {
 
-		private  OkHttpClient client;
+		private OkHttpClient client;
+
 		private final String baseUrl;
 
 		private MyClient(String baseUrl) {
 			this.baseUrl = baseUrl;
 
-			this.client = new OkHttpClient.Builder()
-				.addInterceptor(new Interceptor() {
-					final int MAXTRIES = 20;
-					final int DELAY_SECONDS = 3;
-					@Override
-					public Response intercept(Chain chain) throws IOException {
-						Request request = chain.request();
-						Response response = null;
-						int tryCount = 0;
-						boolean noException=false;
+			this.client = new OkHttpClient.Builder().addInterceptor(new Interceptor() {
+				final int MAXTRIES = 20;
 
-						while (!noException && tryCount < MAXTRIES) {
-							try {
-								response = chain.proceed(request);
-								noException=true;
-							}catch (Exception e){
-								try {
-									noException=false;
-									logger.info("Waiting for service to be up... Attempt:"+tryCount);
-									response.close();
+				final int DELAY_SECONDS = 3;
 
-									Thread.sleep(DELAY_SECONDS*1000);
-								} catch (InterruptedException ex) {
-									throw new RuntimeException(ex);
-								}
+				@Override
+				public Response intercept(Chain chain) throws IOException {
+					Request request = chain.request();
+					Response response = null;
+					int tryCount = 0;
+					boolean noException = false;
 
-							}finally{
-								tryCount++;
-							}
+					while (!noException && tryCount < MAXTRIES) {
+						try {
+							response = chain.proceed(request);
+							noException = true;
 						}
+						catch (Exception e) {
+							try {
+								noException = false;
+								logger.info("Waiting for service to be up... Attempt:" + tryCount);
+								response.close();
 
-						// otherwise just pass the original response on
-						return response;
+								Thread.sleep(DELAY_SECONDS * 1000);
+							}
+							catch (InterruptedException ex) {
+								throw new RuntimeException(ex);
+							}
+
+						}
+						finally {
+							tryCount++;
+						}
 					}
-				})
-				.build();
+
+					// otherwise just pass the original response on
+					return response;
+				}
+			}).build();
 
 		}
 
 		public void execute(String uriPath, boolean throwExceptionWhenCodeIsNot200) {
-			Request request = new Request.Builder()
-				.url(baseUrl + assureStartsWithSlash(uriPath))
+			Request request = new Request.Builder().url(baseUrl + assureStartsWithSlash(uriPath))
 
 				.build();
 
 			Call call = client.newCall(request);
-
 
 			try (Response response = call.execute()) {
 				if (throwExceptionWhenCodeIsNot200) {
@@ -194,7 +197,8 @@ public class ClientTester {
 						throw new RuntimeException(String.format("URI '%s' returned code %d", uriPath, code));
 					}
 				}
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -213,5 +217,7 @@ public class ClientTester {
 			}
 			return '/' + trimmedUri;
 		}
+
 	}
+
 }

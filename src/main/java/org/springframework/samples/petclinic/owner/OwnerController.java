@@ -53,7 +53,9 @@ import jakarta.validation.Valid;
 class OwnerController implements InitializingBean {
 
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
+
 	private static final OwnerValidation validator = new OwnerValidation();
+
 	@Autowired
 	private OpenTelemetry openTelemetry;
 
@@ -63,6 +65,7 @@ class OwnerController implements InitializingBean {
 	public void afterPropertiesSet() throws Exception {
 		this.otelTracer = openTelemetry.getTracer("SampleInsightsController");
 	}
+
 	private final OwnerRepository owners;
 
 	public OwnerController(OwnerRepository clinicService) {
@@ -129,7 +132,7 @@ class OwnerController implements InitializingBean {
 	}
 
 	private String addPaginationModel(int page, Model model, Page<Owner> paginated) {
-		//throw new RuntimeException();
+		// throw new RuntimeException();
 		model.addAttribute("listOwners", paginated);
 		List<Owner> listOwners = paginated.getContent();
 		model.addAttribute("currentPage", page);
@@ -148,7 +151,8 @@ class OwnerController implements InitializingBean {
 
 	private void DbQuery() {
 		// simulate SpanKind of DB query
-		// see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
+		// see
+		// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
 		Span span = otelTracer.spanBuilder("query_users_by_id")
 			.setSpanKind(SpanKind.CLIENT)
 			.setAttribute("db.system", "other_sql")
@@ -157,10 +161,12 @@ class OwnerController implements InitializingBean {
 
 		try {
 			delay(1);
-		} finally {
+		}
+		finally {
 			span.end();
 		}
 	}
+
 	@GetMapping("/owners/{ownerId}/edit")
 	public String initUpdateOwnerForm(@PathVariable("ownerId") int ownerId, Model model) {
 		Owner owner = this.owners.findById(ownerId);
@@ -171,7 +177,8 @@ class OwnerController implements InitializingBean {
 	private static void delay(long millis) {
 		try {
 			Thread.sleep(millis);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			Thread.interrupted();
 		}
 	}

@@ -93,10 +93,12 @@ public class SampleInsightsController implements InitializingBean {
 
 		try {
 			throw new AppException("some message");
-		} catch (AppException e) {
+		}
+		catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
-		} finally {
+		}
+		finally {
 			span.end();
 		}
 	}
@@ -106,7 +108,8 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = Span.current();
 		try {
 			throw new AppException("on current span");
-		} catch (AppException e) {
+		}
+		catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -118,7 +121,8 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = LocalRootSpan.current();
 		try {
 			throw new AppException("on local root span");
-		} catch (AppException e) {
+		}
+		catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -130,7 +134,6 @@ public class SampleInsightsController implements InitializingBean {
 	public String reqMapOfGet() {
 		return "Welcome";
 	}
-
 
 	@GetMapping("NPlusOneWithoutInternalSpan")
 	public String genNPlusOneWithoutInternalSpan() {
@@ -148,7 +151,8 @@ public class SampleInsightsController implements InitializingBean {
 			for (int i = 0; i < 100; i++) {
 				DbQuery();
 			}
-		} finally {
+		}
+		finally {
 			span.end();
 		}
 		return "genNPlusOneWithInternalSpan";
@@ -156,7 +160,8 @@ public class SampleInsightsController implements InitializingBean {
 
 	private void DbQuery() {
 		// simulate SpanKind of DB query
-		// see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
+		// see
+		// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
 		Span span = otelTracer.spanBuilder("query_users_by_id")
 			.setSpanKind(SpanKind.CLIENT)
 			.setAttribute("db.system", "other_sql")
@@ -164,8 +169,9 @@ public class SampleInsightsController implements InitializingBean {
 			.startSpan();
 
 		try {
-			//delay(1);
-		} finally {
+			// delay(1);
+		}
+		finally {
 			span.end();
 		}
 	}
@@ -173,7 +179,8 @@ public class SampleInsightsController implements InitializingBean {
 	private static void delay(long millis) {
 		try {
 			Thread.sleep(millis);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			Thread.interrupted();
 		}
 	}
