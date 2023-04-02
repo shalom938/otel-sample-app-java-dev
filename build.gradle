@@ -55,30 +55,27 @@ tasks.named('test') {
   useJUnitPlatform()
 }
 
-task runClientTester(type: JavaExec) {
-    group = "Execution"
-    description = "Run Client Tester"
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'petclinic.client.ClientTester'
-}
 
 // running with agent, will instrument HTTP client calls with library named io.opentelemetry.okhttp-3.0
-task runClientTesterWithAgent(type: JavaExec) {
+task runClientTester(type: JavaExec) {
     group = "Execution"
     description = "Run Client Tester"
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'petclinic.client.ClientTester'
     jvmArgs("-javaagent:build/otel/opentelemetry-javaagent.jar")
     systemProperty("otel.service.name", "ClientTesterOfPetClinic")
-    environment("PETSHOP_URL", "http://localhost:9753")
     systemProperty("otel.traces.exporter", "otlp")
+    environment("OTEL_RESOURCE_ATTRIBUTES", "digma.environment=INTEGRATION")
     systemProperty("otel.exporter.otlp.traces.endpoint", "http://localhost:5050")
+    environment("PETSHOP_URL", "http://localhost:9753")
+
 }
 
 bootJar {
     dependsOn("downloadOtelAgent")
     dependsOn("downloadDigmaAgentExtension")
 }
+
 
 // Download the OpenTelemetry java agent and put it in the build directory
 task downloadOtelAgent(type: Download) {

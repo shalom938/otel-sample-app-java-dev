@@ -162,7 +162,9 @@ public class ClientTester {
 							try {
 								noException = false;
 								logger.info("Waiting for service to be up... Attempt:" + tryCount);
-								response.close();
+								if (response!=null) {
+									response.close();
+								}
 
 								Thread.sleep(DELAY_SECONDS * 1000);
 							}

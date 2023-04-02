@@ -54,7 +54,7 @@ class OwnerController implements InitializingBean {
 
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
 
-	private static final OwnerValidation validator = new OwnerValidation();
+	private  OwnerValidation validator;
 
 	@Autowired
 	private OpenTelemetry openTelemetry;
@@ -63,7 +63,9 @@ class OwnerController implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		this.otelTracer = openTelemetry.getTracer("SampleInsightsController");
+		this.otelTracer = openTelemetry.getTracer("OwnerController");
+
+		validator = new OwnerValidation(this.otelTracer);
 	}
 
 	private final OwnerRepository owners;
@@ -85,17 +87,23 @@ class OwnerController implements InitializingBean {
 	@GetMapping("/owners/new")
 	public String initCreationForm(Map<String, Object> model) {
 		Owner owner = new Owner();
-		validator.ValidateOwnerWithExternalService();
+		validator.ValidateOwnerWithExternalService(owner);
 		model.put("owner", owner);
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 	}
+
+
+
 
 	@PostMapping("/owners/new")
 	public String processCreationForm(@Valid Owner owner, BindingResult result) {
 		if (result.hasErrors()) {
 			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 		}
+		validator.ValidateOwnerWithExternalService(owner);
+		validator.PerformValidationFlow(owner);
 
+		validator.checkOwnerValidity(owner);
 		this.owners.save(owner);
 		return "redirect:/owners/" + owner.getId();
 	}
@@ -131,6 +139,7 @@ class OwnerController implements InitializingBean {
 		return addPaginationModel(page, model, ownersResults);
 	}
 
+	@WithSpan
 	private String addPaginationModel(int page, Model model, Page<Owner> paginated) {
 		// throw new RuntimeException();
 		model.addAttribute("listOwners", paginated);
@@ -191,6 +200,10 @@ class OwnerController implements InitializingBean {
 		}
 
 		owner.setId(ownerId);
+		validator.checkOwnerValidity(owner);
+
+		validator.ValidateOwnerWithExternalService(owner);
+
 		this.owners.save(owner);
 		return "redirect:/owners/{ownerId}";
 	}

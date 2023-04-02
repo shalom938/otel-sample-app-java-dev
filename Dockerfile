@@ -7,7 +7,7 @@ ENV OTEL_LOGS_EXPORTER="otlp"
 ENV OTEL_METRICS_EXPORTER=none
 
 ENV CODE_PACKAGE_PREFIXES="org.springframework.samples.petclinic"
-ENV DEPLOYMENT_ENV="SAMPLE_ENV2"
+ENV DEPLOYMENT_ENV="SAMPLE_ENV"
 
 ADD build/libs/spring-petclinic-*.jar /app.jar
 ADD build/otel/opentelemetry-javaagent.jar /opentelemetry-javaagent.jar
