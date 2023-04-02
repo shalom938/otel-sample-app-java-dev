@@ -54,7 +54,7 @@ class OwnerController implements InitializingBean {
 
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
 
-	private  OwnerValidation validator;
+	private OwnerValidation validator;
 
 	@Autowired
 	private OpenTelemetry openTelemetry;
@@ -91,9 +91,6 @@ class OwnerController implements InitializingBean {
 		model.put("owner", owner);
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 	}
-
-
-
 
 	@PostMapping("/owners/new")
 	public String processCreationForm(@Valid Owner owner, BindingResult result) {

@@ -162,7 +162,7 @@ public class ClientTester {
 							try {
 								noException = false;
 								logger.info("Waiting for service to be up... Attempt:" + tryCount);
-								if (response!=null) {
+								if (response != null) {
 									response.close();
 								}
 
