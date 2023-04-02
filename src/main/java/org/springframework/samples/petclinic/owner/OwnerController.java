@@ -18,9 +18,17 @@ package org.springframework.samples.petclinic.owner;
 import java.util.List;
 import java.util.Map;
 
+import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.SpanKind;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.samples.petclinic.domain.OwnerValidation;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -42,9 +50,23 @@ import jakarta.validation.Valid;
  * @author Michael Isvy
  */
 @Controller
-class OwnerController {
+class OwnerController implements InitializingBean {
 
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
+
+	private OwnerValidation validator;
+
+	@Autowired
+	private OpenTelemetry openTelemetry;
+
+	private Tracer otelTracer;
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+		this.otelTracer = openTelemetry.getTracer("OwnerController");
+
+		validator = new OwnerValidation(this.otelTracer);
+	}
 
 	private final OwnerRepository owners;
 
@@ -65,6 +87,7 @@ class OwnerController {
 	@GetMapping("/owners/new")
 	public String initCreationForm(Map<String, Object> model) {
 		Owner owner = new Owner();
+		validator.ValidateOwnerWithExternalService(owner);
 		model.put("owner", owner);
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 	}
@@ -74,7 +97,10 @@ class OwnerController {
 		if (result.hasErrors()) {
 			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 		}
+		validator.ValidateOwnerWithExternalService(owner);
+		validator.PerformValidationFlow(owner);
 
+		validator.checkOwnerValidity(owner);
 		this.owners.save(owner);
 		return "redirect:/owners/" + owner.getId();
 	}
@@ -110,7 +136,9 @@ class OwnerController {
 		return addPaginationModel(page, model, ownersResults);
 	}
 
+	@WithSpan
 	private String addPaginationModel(int page, Model model, Page<Owner> paginated) {
+		// throw new RuntimeException();
 		model.addAttribute("listOwners", paginated);
 		List<Owner> listOwners = paginated.getContent();
 		model.addAttribute("currentPage", page);
@@ -120,10 +148,29 @@ class OwnerController {
 		return "owners/ownersList";
 	}
 
+	@WithSpan()
 	private Page<Owner> findPaginatedForOwnersLastName(int page, String lastname) {
 		int pageSize = 5;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
 		return owners.findByLastName(lastname, pageable);
+	}
+
+	private void DbQuery() {
+		// simulate SpanKind of DB query
+		// see
+		// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
+		Span span = otelTracer.spanBuilder("query_users_by_id")
+			.setSpanKind(SpanKind.CLIENT)
+			.setAttribute("db.system", "other_sql")
+			.setAttribute("db.statement", "select * from users where id = :id")
+			.startSpan();
+
+		try {
+			delay(1);
+		}
+		finally {
+			span.end();
+		}
 	}
 
 	@GetMapping("/owners/{ownerId}/edit")
@@ -131,6 +178,15 @@ class OwnerController {
 		Owner owner = this.owners.findById(ownerId);
 		model.addAttribute(owner);
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+	}
+
+	private static void delay(long millis) {
+		try {
+			Thread.sleep(millis);
+		}
+		catch (InterruptedException e) {
+			Thread.interrupted();
+		}
 	}
 
 	@PostMapping("/owners/{ownerId}/edit")
@@ -141,6 +197,10 @@ class OwnerController {
 		}
 
 		owner.setId(ownerId);
+		validator.checkOwnerValidity(owner);
+
+		validator.ValidateOwnerWithExternalService(owner);
+
 		this.owners.save(owner);
 		return "redirect:/owners/{ownerId}";
 	}

@@ -1,73 +1,54 @@
-# OpenTelemetry Sample: Java SpringBoot based APIs instrumented with OTEL and Digma
+# Digma Sample: Java SpringBoot PetClinic Sample
 
-The following code is a sample application used to test various scenarios, performance bottlenecks and runtime errors with [Digma](https://github.com/digma-ai/digma). This sample uses the standard OTEL instrumentation library as well as the [Digma instrumentation](https://github.com/digma-ai/otel-java-instrumentation/blob/main/instrumentation/spring/spring-boot-autoconfigure/) helper library. 
+The following code is a sample application used to demonstrate how [Digma](https://github.com/digma-ai/digma) can help demystify code by providing visibility into code paths, breakdown, identifying performance bottlenecks and runtime errors. 
 
-We took the original application of [PetClinic](https://github.com/spring-projects/spring-petclinic) and modified it a bit to support instrumentation of OpenTelemetry and Digma.
+We took the original application of [PetClinic](https://github.com/spring-projects/spring-petclinic) and added some common coding anti-patterns that would often be detected in real-world codebases.
 
 ## Prerequisites
 
-- [Java 17+](https://www.oracle.com/sa/java/technologies/javase/jdk11-archive-downloads.html)
-- [Docker (docker-compose)](https://www.docker.com/)
-- [IntelliJ IDEA 2022.2+](https://www.jetbrains.com/idea/download)
+- [Java 17+](https://www.oracle.com/sa/java/technologies/javase/jdk17-archive-downloads.html)
+- [IntelliJ IDEA 2022.3+](https://www.jetbrains.com/idea/download)
 
-## Running the app with Digma
+## Optional
 
-### Install the IDE extension
+- [Docker](https://www.docker.com/)
 
-1. Install the [Digma Plugin](https://plugins.jetbrains.com/plugin/19470-digma-continuous-feedback) into the Intellij IDE
-2. Launch Intellij
-3. Open 'Settings' (shortcut <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>S</kbd>) and search for setting of 'Digma Plugin' (under Tools) 
-
-![image](https://user-images.githubusercontent.com/104715391/203003539-3d450c45-9811-4fc0-9188-d2fda3d4f18c.png)
-
-4. Set the 'Digma Api Url' to be https://localhost:5051
+## Running the app with Digma Continuous Feedback
 
 ### Build the application and run it
 
-After cloning this project to your machine, run the following command in order to build the application:
+1. Clone this project to your machine and open it in [IntelliJ](https://www.jetbrains.com/idea/download).
+2. Make sure to select 'Gradle Project' when prompted
+3. run the following command in order prepare the 
+environment:
+`./gradlew bootJar`
 
-```shell
-./gradlew bootJar
-```
+### Install the IDE extension and Digma
 
-#### There are to options to run the application.
+1.Install the [Digma Plugin](https://plugins.jetbrains.com/plugin/19470-digma-continuous-feedback) . You can also just search for it in the IDE settings Plugins section.
+2.Click the 'Digma' icon on the right side of the screen and walk through the two quick setup steps.
 
-##### Option 1. Via docker which includes the App and Collector
+#### There are a few options to run the application.
 
-Run the application and the collector with docker compose
+Notice that feedback will start appearing in the 'Observabiliy' panel below.
+You may then click a specific endpoint to explore further, more insights and analytics will apear the more you use the application.
+
+##### Option 1. Use the included Run Configuration
+
+Select the 'petclinic-service' configuration and run or debug it locally.
+You can either use the 'ClientTester' task to generate some actions or just browse directly to the PetClinic [main](http://localhost:9753/) page.
+
+##### Option 2. Via docker which includes the App and Collector
+
+Run the application using the included Docker Compose file
 
 ```shell
 docker-compose up --build
 ```
 
-##### Option 2. Via "Run Configurations"
-
-Choose "PetClinic - with OTEL agent + Digma extension" and run it
-
-### Use the application automatically with ClientTester
-
-Run the following command in order to run ClientTester, which will access the application in various ways
-
-```shell
-./gradlew runClientTester
-```
-
-### Use the application automatically with ClientTester
-
-Similar to runClientTester but will also use the OTEL agent which will instrument the HTTP Client calls 
-
-```shell
-./gradlew runClientTesterWithAgent
-```
-
 ### Use the application Manually
 
 Browse to [Local PetClinic](http://localhost:9753/) and use the application freely.
-
-![image](https://user-images.githubusercontent.com/104715391/203006282-b1db606f-1e92-46cd-8a62-40a96d80d7d6.png)
-
-We suggest to mainly focusing on 'Find Owners' and beneath use the Add/Edit Owner, Add/Edit Pet.
-Also, in order to see errors in our plugin also click on 'ERROR', 'APPERROR1' and 'APPERROR2' 
 
 ### View Digma Insights via Plugin
 
