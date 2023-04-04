@@ -1,15 +1,27 @@
 package org.springframework.samples.petclinic.domain;
 
-import org.springframework.samples.petclinic.owner.Owner;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 
 public class PasswordUtils {
 
-	public boolean vldtPswd(Owner usr, String pswd) {
-		return false;
+	@WithSpan
+	public boolean vldtPswd(String usr, String pswd) {
+		try {
+			Thread.sleep(30);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		return true;
 	}
 
-	public String encPswd(String pswd) {
-		return null;
+	@WithSpan
+	public String encPswd(String pswd)  {
+		try {
+			Thread.sleep(300);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+		return "";
 	}
 
 }

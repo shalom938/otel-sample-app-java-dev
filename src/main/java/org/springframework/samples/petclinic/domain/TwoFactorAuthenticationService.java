@@ -1,10 +1,16 @@
 package org.springframework.samples.petclinic.domain;
 
-import org.springframework.samples.petclinic.owner.Owner;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 
 public class TwoFactorAuthenticationService {
 
-	public boolean init2FA(Owner usr) {
+	@WithSpan
+	public boolean init2FA(String usr) {
+		try {
+			Thread.sleep(400);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 		return true;
 	}
 
@@ -12,7 +18,13 @@ public class TwoFactorAuthenticationService {
 		return "";
 	}
 
-	public boolean vldtToken(Owner usr, String token) {
+	public boolean vldtToken(String usr, String token) {
+		try {
+			Thread.sleep(40);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+
 		return true;
 	}
 
