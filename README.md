@@ -1,5 +1,6 @@
 # Digma Sample: Java SpringBoot PetClinic Sample
 
+[![digma-ai](https://circleci.com/gh/digma-ai/otel-sample-app-java.svg?style=svg)](https://circleci.com/gh/digma-ai/otel-sample-app-java)
 The following code is a sample application used to demonstrate how [Digma](https://github.com/digma-ai/digma) can help demystify code by providing visibility into code paths, breakdown, identifying performance bottlenecks and runtime errors. 
 
 We took the original application of [PetClinic](https://github.com/spring-projects/spring-petclinic) and added some common coding anti-patterns that would often be detected in real-world codebases.
