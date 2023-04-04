@@ -102,6 +102,7 @@ class OwnerController implements InitializingBean {
 
 		validator.checkOwnerValidity(owner);
 		this.owners.save(owner);
+		validator.ValidateUserAccess("admin","pwd","fullaccess");
 		return "redirect:/owners/" + owner.getId();
 	}
 
@@ -113,6 +114,9 @@ class OwnerController implements InitializingBean {
 	@GetMapping("/owners")
 	public String processFindForm(@RequestParam(defaultValue = "1") int page, Owner owner, BindingResult result,
 			Model model) {
+
+		validator.ValidateUserAccess("admin","pwd","fullaccess");
+
 		// allow parameterless GET request for /owners to return all records
 		if (owner.getLastName() == null) {
 			owner.setLastName(""); // empty string signifies broadest possible search
@@ -155,23 +159,6 @@ class OwnerController implements InitializingBean {
 		return owners.findByLastName(lastname, pageable);
 	}
 
-	private void DbQuery() {
-		// simulate SpanKind of DB query
-		// see
-		// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/database.md
-		Span span = otelTracer.spanBuilder("query_users_by_id")
-			.setSpanKind(SpanKind.CLIENT)
-			.setAttribute("db.system", "other_sql")
-			.setAttribute("db.statement", "select * from users where id = :id")
-			.startSpan();
-
-		try {
-			delay(1);
-		}
-		finally {
-			span.end();
-		}
-	}
 
 	@GetMapping("/owners/{ownerId}/edit")
 	public String initUpdateOwnerForm(@PathVariable("ownerId") int ownerId, Model model) {
@@ -201,6 +188,7 @@ class OwnerController implements InitializingBean {
 
 		validator.ValidateOwnerWithExternalService(owner);
 
+		validator.PerformValidationFlow(owner);
 		this.owners.save(owner);
 		return "redirect:/owners/{ownerId}";
 	}
@@ -212,8 +200,12 @@ class OwnerController implements InitializingBean {
 	 */
 	@GetMapping("/owners/{ownerId}")
 	public ModelAndView showOwner(@PathVariable("ownerId") int ownerId) {
+		validator.ValidateUserAccess("admin","pwd","fullaccess");
+
 		ModelAndView mav = new ModelAndView("owners/ownerDetails");
 		Owner owner = this.owners.findById(ownerId);
+		validator.ValidateOwnerWithExternalService(owner);
+
 		mav.addObject(owner);
 		return mav;
 	}

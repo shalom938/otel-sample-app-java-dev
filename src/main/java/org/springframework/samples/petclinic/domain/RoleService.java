@@ -1,10 +1,16 @@
 package org.springframework.samples.petclinic.domain;
 
-import org.springframework.samples.petclinic.owner.Owner;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 
 public class RoleService {
 
-	public boolean vldtUsrRole(Owner usr, String sysCode) {
+	@WithSpan
+	public boolean vldtUsrRole(String usr, String sysCode) {
+		try {
+			Thread.sleep(40);
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 		return true;
 	}
 
