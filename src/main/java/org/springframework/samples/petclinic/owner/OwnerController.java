@@ -89,6 +89,8 @@ class OwnerController implements InitializingBean {
 		Owner owner = new Owner();
 		validator.ValidateOwnerWithExternalService(owner);
 		model.put("owner", owner);
+		validator.ValidateUserAccess("admin","pwd","fullaccess");
+
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 	}
 
