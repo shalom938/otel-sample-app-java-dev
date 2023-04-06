@@ -54,12 +54,6 @@ public class OwnerValidation {
 			return false;
 		}
 
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
-
 		boolean is2FASuccess = twoFASvc.init2FA(usr);
 		if (!is2FASuccess) {
 			return false;
