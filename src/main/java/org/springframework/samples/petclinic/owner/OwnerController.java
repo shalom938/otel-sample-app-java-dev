@@ -89,16 +89,10 @@ class OwnerController implements InitializingBean {
 		Owner owner = new Owner();
 		validator.ValidateOwnerWithExternalService(owner);
 		model.put("owner", owner);
-		validator.ValidateUserAccess("admin","pwd","fullaccess");
+		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 	}
-
-
-
-
-
-
 
 	@PostMapping("/owners/new")
 	public String processCreationForm(@Valid Owner owner, BindingResult result) {
@@ -110,7 +104,7 @@ class OwnerController implements InitializingBean {
 
 		validator.checkOwnerValidity(owner);
 		this.owners.save(owner);
-		validator.ValidateUserAccess("admin","pwd","fullaccess");
+		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 		return "redirect:/owners/" + owner.getId();
 	}
 
@@ -123,7 +117,7 @@ class OwnerController implements InitializingBean {
 	public String processFindForm(@RequestParam(defaultValue = "1") int page, Owner owner, BindingResult result,
 			Model model) {
 
-		validator.ValidateUserAccess("admin","pwd","fullaccess");
+		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 
 		// allow parameterless GET request for /owners to return all records
 		if (owner.getLastName() == null) {
@@ -167,7 +161,6 @@ class OwnerController implements InitializingBean {
 		return owners.findByLastName(lastname, pageable);
 	}
 
-
 	@GetMapping("/owners/{ownerId}/edit")
 	public String initUpdateOwnerForm(@PathVariable("ownerId") int ownerId, Model model) {
 		Owner owner = this.owners.findById(ownerId);
@@ -208,7 +201,7 @@ class OwnerController implements InitializingBean {
 	 */
 	@GetMapping("/owners/{ownerId}")
 	public ModelAndView showOwner(@PathVariable("ownerId") int ownerId) {
-		validator.ValidateUserAccess("admin","pwd","fullaccess");
+		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 
 		ModelAndView mav = new ModelAndView("owners/ownerDetails");
 		Owner owner = this.owners.findById(ownerId);

@@ -8,7 +8,8 @@ public class TwoFactorAuthenticationService {
 	public boolean init2FA(String usr) {
 		try {
 			Thread.sleep(400);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 		return true;
@@ -21,7 +22,8 @@ public class TwoFactorAuthenticationService {
 	public boolean vldtToken(String usr, String token) {
 		try {
 			Thread.sleep(40);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 
