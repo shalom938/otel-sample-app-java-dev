@@ -142,7 +142,9 @@ public class OwnerValidation {
 	}
 
 	public void PerformValidationFlow(Owner owner) {
-
+		if (owner.getPet("Jerry").isNew()){
+			ValidateOwner();
+		}
 	}
 
 }
