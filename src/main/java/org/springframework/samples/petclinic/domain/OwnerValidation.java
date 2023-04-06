@@ -21,11 +21,11 @@ public class OwnerValidation {
 	private TwoFactorAuthenticationService twoFASvc;
 
 	public OwnerValidation(Tracer otelTracer) {
-		this.pwdUtils=new PasswordUtils();
-		this.roleSvc= new RoleService();
+		this.pwdUtils = new PasswordUtils();
+		this.roleSvc = new RoleService();
 		this.otelTracer = otelTracer;
 		this.usrValSvc = new UserValidationService();
-		this.twoFASvc=new TwoFactorAuthenticationService();
+		this.twoFASvc = new TwoFactorAuthenticationService();
 	}
 
 	@WithSpan
@@ -90,17 +90,6 @@ public class OwnerValidation {
 		return ValidateOwnerUser(owner);
 	}
 
-
-
-
-
-
-
-
-
-
-
-
 	private boolean ValidateOwnerUser(Owner owner) {
 
 		Span span = otelTracer.spanBuilder("db_access_01").startSpan();
@@ -136,7 +125,7 @@ public class OwnerValidation {
 	}
 
 	public void PerformValidationFlow(Owner owner) {
-		if (owner.getPet("Jerry").isNew()){
+		if (owner.getPet("Jerry").isNew()) {
 			ValidateOwner();
 		}
 	}

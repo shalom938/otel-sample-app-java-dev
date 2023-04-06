@@ -8,17 +8,19 @@ public class PasswordUtils {
 	public boolean vldtPswd(String usr, String pswd) {
 		try {
 			Thread.sleep(30);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 		return true;
 	}
 
 	@WithSpan
-	public String encPswd(String pswd)  {
+	public String encPswd(String pswd) {
 		try {
 			Thread.sleep(300);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
 		return "";
