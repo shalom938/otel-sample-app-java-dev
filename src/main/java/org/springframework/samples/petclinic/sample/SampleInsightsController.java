@@ -67,12 +67,10 @@ public class SampleInsightsController implements InitializingBean {
 		return "ErrorHotspot";
 	}
 
-	@WithSpan
 	private void method1() {
 		method2();
 	}
 
-	@WithSpan
 	private void method2() {
 		method3();
 	}
