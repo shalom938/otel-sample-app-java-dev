@@ -65,10 +65,9 @@ task runClientTester(type: JavaExec) {
     jvmArgs("-javaagent:build/otel/opentelemetry-javaagent.jar")
     systemProperty("otel.service.name", "ClientTesterOfPetClinic")
     systemProperty("otel.traces.exporter", "otlp")
-    environment("OTEL_RESOURCE_ATTRIBUTES", "digma.environment=INTEGRATION")
+    environment("OTEL_RESOURCE_ATTRIBUTES", "digma.environment=DEV")
     systemProperty("otel.exporter.otlp.traces.endpoint", "http://localhost:5050")
     environment("PETSHOP_URL", "http://localhost:9753")
-
 }
 
 bootJar {
