@@ -74,7 +74,12 @@ task runClientTester(type: JavaExec) {
     environment("PETSHOP_URL", "http://localhost:9753")
 }
 
-bootJar {
+bootTestRun {
+    dependsOn("downloadOtelAgent")
+    dependsOn("downloadDigmaAgentExtension")
+}
+
+runClientTester {
     dependsOn("downloadOtelAgent")
     dependsOn("downloadDigmaAgentExtension")
 }
