@@ -1,6 +1,6 @@
 plugins {
   id 'java'
-  id 'org.springframework.boot' version '3.1.1'
+  id 'org.springframework.boot' version '3.1.2'
   id 'io.spring.dependency-management' version '1.1.0'
   id 'org.graalvm.buildtools.native' version '0.9.23'
   id 'de.undercouch.download' version '4.1.1'
@@ -9,7 +9,7 @@ plugins {
 apply plugin: 'java'
 
 group = 'org.springframework.samples'
-version = '3.1.0'
+version = '3.1.2'
 sourceCompatibility = '17'
 
 def OPENTELEMETRY_VERSION = '1.27.0'
@@ -74,7 +74,12 @@ task runClientTester(type: JavaExec) {
     environment("PETSHOP_URL", "http://localhost:9753")
 }
 
-bootJar {
+bootTestRun {
+    dependsOn("downloadOtelAgent")
+    dependsOn("downloadDigmaAgentExtension")
+}
+
+runClientTester {
     dependsOn("downloadOtelAgent")
     dependsOn("downloadDigmaAgentExtension")
 }
