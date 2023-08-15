@@ -105,6 +105,11 @@ public class ClientTester {
 			myClient.execute("/NPlusOneWithoutInternalSpan");
 		}
 
+		logger.info("***** Async workers *****");
+		for (int ix = 1; ix <= 2; ix++) {
+			myClient.execute("/GenAsyncSpanVar01");
+		}
+
 		logger.info("***** Load and high usage *****");
 		for (int ix = 1; ix <= 400; ix++) {
 			myClient.execute("/HighUsage");

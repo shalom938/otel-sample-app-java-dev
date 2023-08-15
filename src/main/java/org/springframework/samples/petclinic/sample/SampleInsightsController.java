@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
@@ -25,10 +28,12 @@ public class SampleInsightsController implements InitializingBean {
 	private OpenTelemetry openTelemetry;
 
 	private Tracer otelTracer;
+	private ExecutorService executorService;
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		this.otelTracer = openTelemetry.getTracer("SampleInsightsController");
+		this.executorService = Executors.newFixedThreadPool(5);
 	}
 
 	@GetMapping("/SpanBottleneck")
@@ -129,6 +134,17 @@ public class SampleInsightsController implements InitializingBean {
 		return "Welcome";
 	}
 
+	@GetMapping("GenAsyncSpanVar01")
+	public String genAsyncSpanVar01() {
+		executorService.submit(() -> {
+			doSomeWorkA(654);
+		});
+
+		doSomeWorkB(5);
+
+		return "genAsyncSpanVar01";
+	}
+
 	@GetMapping("NPlusOneWithoutInternalSpan")
 	public String genNPlusOneWithoutInternalSpan() {
 		for (int i = 0; i < 100; i++) {
@@ -166,6 +182,16 @@ public class SampleInsightsController implements InitializingBean {
 		} finally {
 			span.end();
 		}
+	}
+
+	@WithSpan
+	private void doSomeWorkA(long millis) {
+		delay(millis);
+	}
+
+	@WithSpan
+	private void doSomeWorkB(long millis) {
+		delay(millis);
 	}
 
 	private static void delay(long millis) {
