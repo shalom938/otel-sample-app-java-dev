@@ -91,12 +91,10 @@ public class SampleInsightsController implements InitializingBean {
 
 		try {
 			throw new AppException("some message");
-		}
-		catch (AppException e) {
+		} catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
-		}
-		finally {
+		} finally {
 			span.end();
 		}
 	}
@@ -106,8 +104,7 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = Span.current();
 		try {
 			throw new AppException("on current span");
-		}
-		catch (AppException e) {
+		} catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -119,8 +116,7 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = LocalRootSpan.current();
 		try {
 			throw new AppException("on local root span");
-		}
-		catch (AppException e) {
+		} catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -149,8 +145,7 @@ public class SampleInsightsController implements InitializingBean {
 			for (int i = 0; i < 100; i++) {
 				DbQuery();
 			}
-		}
-		finally {
+		} finally {
 			span.end();
 		}
 		return "genNPlusOneWithInternalSpan";
@@ -168,8 +163,7 @@ public class SampleInsightsController implements InitializingBean {
 
 		try {
 			// delay(1);
-		}
-		finally {
+		} finally {
 			span.end();
 		}
 	}
@@ -177,8 +171,7 @@ public class SampleInsightsController implements InitializingBean {
 	private static void delay(long millis) {
 		try {
 			Thread.sleep(millis);
-		}
-		catch (InterruptedException e) {
+		} catch (InterruptedException e) {
 			Thread.interrupted();
 		}
 	}
