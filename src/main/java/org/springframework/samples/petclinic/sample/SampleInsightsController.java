@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 @RestController
@@ -25,10 +28,12 @@ public class SampleInsightsController implements InitializingBean {
 	private OpenTelemetry openTelemetry;
 
 	private Tracer otelTracer;
+	private ExecutorService executorService;
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
 		this.otelTracer = openTelemetry.getTracer("SampleInsightsController");
+		this.executorService = Executors.newFixedThreadPool(5);
 	}
 
 	@GetMapping("/SpanBottleneck")
@@ -91,12 +96,10 @@ public class SampleInsightsController implements InitializingBean {
 
 		try {
 			throw new AppException("some message");
-		}
-		catch (AppException e) {
+		} catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
-		}
-		finally {
+		} finally {
 			span.end();
 		}
 	}
@@ -106,8 +109,7 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = Span.current();
 		try {
 			throw new AppException("on current span");
-		}
-		catch (AppException e) {
+		} catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -119,8 +121,7 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = LocalRootSpan.current();
 		try {
 			throw new AppException("on local root span");
-		}
-		catch (AppException e) {
+		} catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -131,6 +132,17 @@ public class SampleInsightsController implements InitializingBean {
 	@RequestMapping(value = "req-map-get", method = GET)
 	public String reqMapOfGet() {
 		return "Welcome";
+	}
+
+	@GetMapping("GenAsyncSpanVar01")
+	public String genAsyncSpanVar01() {
+		executorService.submit(() -> {
+			doSomeWorkA(654);
+		});
+
+		doSomeWorkB(5);
+
+		return "genAsyncSpanVar01";
 	}
 
 	@GetMapping("NPlusOneWithoutInternalSpan")
@@ -149,11 +161,29 @@ public class SampleInsightsController implements InitializingBean {
 			for (int i = 0; i < 100; i++) {
 				DbQuery();
 			}
+		} finally {
+			span.end();
+		}
+		return "genNPlusOneWithInternalSpan";
+	}
+
+	@GetMapping("GenerateSpans")
+	public String generateSpans(@RequestParam(name = "uniqueSpans") long uniqueSpans) {
+		for (int i = 0; i < uniqueSpans; i++) {
+			GenerateSpan("GeneratedSpan_" + i);
+		}
+
+		return "Success";
+	}
+
+	private void GenerateSpan(String spanName){
+		Span span = otelTracer.spanBuilder(spanName).startSpan();
+		try {
+			delay(1);
 		}
 		finally {
 			span.end();
 		}
-		return "genNPlusOneWithInternalSpan";
 	}
 
 	private void DbQuery() {
@@ -168,17 +198,25 @@ public class SampleInsightsController implements InitializingBean {
 
 		try {
 			// delay(1);
-		}
-		finally {
+		} finally {
 			span.end();
 		}
+	}
+
+	@WithSpan
+	private void doSomeWorkA(long millis) {
+		delay(millis);
+	}
+
+	@WithSpan
+	private void doSomeWorkB(long millis) {
+		delay(millis);
 	}
 
 	private static void delay(long millis) {
 		try {
 			Thread.sleep(millis);
-		}
-		catch (InterruptedException e) {
+		} catch (InterruptedException e) {
 			Thread.interrupted();
 		}
 	}

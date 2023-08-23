@@ -32,6 +32,7 @@
     <maven-checkstyle.version>3.2.2</maven-checkstyle.version>
     <nohttp-checkstyle.version>0.0.11</nohttp-checkstyle.version>
     <spring-format.version>0.0.39</spring-format.version>
+    <otel.version>1.27.0</otel.version>
 
   </properties>
 
@@ -136,6 +137,26 @@
     <dependency>
       <groupId>jakarta.xml.bind</groupId>
       <artifactId>jakarta.xml.bind-api</artifactId>
+    </dependency>
+
+    <!-- OTEL deps, Enables instrumentation using @WithSpan-->
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-instrumentation-api</artifactId>
+      <version>${otel.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-instrumentation-annotations</artifactId>
+      <version>${otel.version}</version>
+    </dependency>
+
+    <!-- used for ClientTester -->
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>4.10.0</version>
     </dependency>
 
   </dependencies>
