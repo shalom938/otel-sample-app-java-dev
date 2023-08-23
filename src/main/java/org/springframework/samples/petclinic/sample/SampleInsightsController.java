@@ -167,6 +167,25 @@ public class SampleInsightsController implements InitializingBean {
 		return "genNPlusOneWithInternalSpan";
 	}
 
+	@GetMapping("GenerateSpans")
+	public String generateSpans(@RequestParam(name = "uniqueSpans") long uniqueSpans) {
+		for (int i = 0; i < uniqueSpans; i++) {
+			GenerateSpan("GeneratedSpan_" + i);
+		}
+
+		return "Success";
+	}
+
+	private void GenerateSpan(String spanName){
+		Span span = otelTracer.spanBuilder(spanName).startSpan();
+		try {
+			delay(1);
+		}
+		finally {
+			span.end();
+		}
+	}
+
 	private void DbQuery() {
 		// simulate SpanKind of DB query
 		// see
