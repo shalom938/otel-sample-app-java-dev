@@ -62,6 +62,9 @@ tasks.named('test') {
 
 // running with agent, will instrument HTTP client calls with library named io.opentelemetry.okhttp-3.0
 task runClientTester(type: JavaExec) {
+
+    outputs.upToDateWhen {false}
+
     group = "Execution"
     description = "Run Client Tester"
     classpath = sourceSets.main.runtimeClasspath
