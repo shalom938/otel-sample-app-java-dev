@@ -179,7 +179,7 @@ public class SampleInsightsController implements InitializingBean {
 	private void GenerateSpan(String spanName){
 		Span span = otelTracer.spanBuilder(spanName).startSpan();
 		try {
-			delay(1);
+			delay(0);
 		}
 		finally {
 			span.end();
