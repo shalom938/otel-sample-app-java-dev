@@ -15,8 +15,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.*;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
@@ -184,6 +186,26 @@ public class SampleInsightsController implements InitializingBean {
 		finally {
 			span.end();
 		}
+	}
+
+	@GetMapping("GenerateSpansWithRandom")
+	public ArrayList<Integer> generateSpansWithRandom(@RequestParam(name = "uniqueSpans") int uniqueSpans, @RequestParam(name = "min")int min, @RequestParam(name = "max")int max) {
+		Random rand = new Random();
+		var numberArray = IntStream.range(min, max + 1)
+			.boxed()
+			.collect(Collectors.toList());
+
+		var resultList = new ArrayList<Integer>();
+
+		for (int i = 0; i < uniqueSpans; i++) {
+			int randomIndex = rand.nextInt(numberArray.size());
+			int randomElement = numberArray.get(randomIndex);
+			numberArray.remove(randomIndex);
+			resultList.add(randomElement);
+			GenerateSpan("GeneratedSpan_" + randomElement);
+		}
+
+		return resultList;
 	}
 
 	private void DbQuery() {
