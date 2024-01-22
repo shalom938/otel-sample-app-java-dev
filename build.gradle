@@ -2,7 +2,7 @@ plugins {
   id 'java'
   id 'org.springframework.boot' version '3.2.1'
   id 'io.spring.dependency-management' version '1.1.4'
-  id 'org.graalvm.buildtools.native' version '0.9.28'
+ // id 'org.graalvm.buildtools.native' version '0.9.28'
   id 'de.undercouch.download' version '4.1.1'
 }
 
@@ -84,11 +84,11 @@ runClientTester {
     dependsOn("downloadDigmaAgentExtension")
 }
 
-
 // Download the OpenTelemetry java agent and put it in the build directory
 task downloadOtelAgent(type: Download) {
     // otel agent version is 1.26.0
-    src "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar"
+    //src "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar"
+    src "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.32.0/opentelemetry-javaagent.jar"
     dest project.buildDir.toString() + "/otel/opentelemetry-javaagent.jar"
     overwrite true
 }
