@@ -20,6 +20,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ImportRuntimeHints;
 
+import java.util.function.BiConsumer;
+
 /**
  * PetClinic Spring Boot Application.
  *
@@ -31,6 +33,18 @@ import org.springframework.context.annotation.ImportRuntimeHints;
 public class PetClinicApplication {
 
 	public static void main(String[] args) {
+		var micrometerAttributes = new StringBuilder("");
+		System.getenv().forEach(new BiConsumer<String, String>() {
+			@Override
+			public void accept(String k, String v) {
+				if (k.startsWith("MANAGEMENT_OPENTELEMETRY_RESOURCE")){
+					micrometerAttributes.append(k + "=" + v).append(",");
+				}
+			}
+		});
+
+		System.out.println("micrometer resource attributes = "+micrometerAttributes);
+		System.out.println("otel resource attributes = "+System.getenv("OTEL_RESOURCE_ATTRIBUTES"));
 		SpringApplication.run(PetClinicApplication.class, args);
 	}
 
