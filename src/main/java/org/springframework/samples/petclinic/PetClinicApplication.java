@@ -37,14 +37,14 @@ public class PetClinicApplication {
 		System.getenv().forEach(new BiConsumer<String, String>() {
 			@Override
 			public void accept(String k, String v) {
-				if (k.startsWith("MANAGEMENT_OPENTELEMETRY_RESOURCE")){
+				if (k.startsWith("MANAGEMENT_OPENTELEMETRY_RESOURCE")) {
 					micrometerAttributes.append(k + "=" + v).append(",");
 				}
 			}
 		});
 
-		System.out.println("micrometer resource attributes = "+micrometerAttributes);
-		System.out.println("otel resource attributes = "+System.getenv("OTEL_RESOURCE_ATTRIBUTES"));
+		System.out.println("micrometer resource attributes = " + micrometerAttributes);
+		System.out.println("otel resource attributes = " + System.getenv("OTEL_RESOURCE_ATTRIBUTES"));
 		SpringApplication.run(PetClinicApplication.class, args);
 	}
 

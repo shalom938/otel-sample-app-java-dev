@@ -30,6 +30,7 @@ public class SampleInsightsController implements InitializingBean {
 	private OpenTelemetry openTelemetry;
 
 	private Tracer otelTracer;
+
 	private ExecutorService executorService;
 
 	@Override
@@ -98,10 +99,12 @@ public class SampleInsightsController implements InitializingBean {
 
 		try {
 			throw new AppException("some message");
-		} catch (AppException e) {
+		}
+		catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
-		} finally {
+		}
+		finally {
 			span.end();
 		}
 	}
@@ -111,7 +114,8 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = Span.current();
 		try {
 			throw new AppException("on current span");
-		} catch (AppException e) {
+		}
+		catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -123,7 +127,8 @@ public class SampleInsightsController implements InitializingBean {
 		Span span = LocalRootSpan.current();
 		try {
 			throw new AppException("on local root span");
-		} catch (AppException e) {
+		}
+		catch (AppException e) {
 			span.recordException(e);
 			span.setStatus(StatusCode.ERROR);
 		}
@@ -163,7 +168,8 @@ public class SampleInsightsController implements InitializingBean {
 			for (int i = 0; i < 100; i++) {
 				DbQuery();
 			}
-		} finally {
+		}
+		finally {
 			span.end();
 		}
 		return "genNPlusOneWithInternalSpan";
@@ -178,7 +184,7 @@ public class SampleInsightsController implements InitializingBean {
 		return "Success";
 	}
 
-	private void GenerateSpan(String spanName){
+	private void GenerateSpan(String spanName) {
 		Span span = otelTracer.spanBuilder(spanName).startSpan();
 		try {
 			delay(0);
@@ -189,11 +195,10 @@ public class SampleInsightsController implements InitializingBean {
 	}
 
 	@GetMapping("GenerateSpansWithRandom")
-	public ArrayList<Integer> generateSpansWithRandom(@RequestParam(name = "uniqueSpans") int uniqueSpans, @RequestParam(name = "min")int min, @RequestParam(name = "max")int max) {
+	public ArrayList<Integer> generateSpansWithRandom(@RequestParam(name = "uniqueSpans") int uniqueSpans,
+			@RequestParam(name = "min") int min, @RequestParam(name = "max") int max) {
 		Random rand = new Random();
-		var numberArray = IntStream.range(min, max + 1)
-			.boxed()
-			.collect(Collectors.toList());
+		var numberArray = IntStream.range(min, max + 1).boxed().collect(Collectors.toList());
 
 		var resultList = new ArrayList<Integer>();
 
@@ -220,7 +225,8 @@ public class SampleInsightsController implements InitializingBean {
 
 		try {
 			// delay(1);
-		} finally {
+		}
+		finally {
 			span.end();
 		}
 	}
@@ -238,7 +244,8 @@ public class SampleInsightsController implements InitializingBean {
 	private static void delay(long millis) {
 		try {
 			Thread.sleep(millis);
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			Thread.interrupted();
 		}
 	}
