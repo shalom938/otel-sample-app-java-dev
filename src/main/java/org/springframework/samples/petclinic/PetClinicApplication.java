@@ -18,8 +18,10 @@ package org.springframework.samples.petclinic;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ImportRuntimeHints;
 
+import java.sql.SQLException;
 import java.util.function.BiConsumer;
 
 /**
@@ -32,7 +34,7 @@ import java.util.function.BiConsumer;
 @ImportRuntimeHints(PetClinicRuntimeHints.class)
 public class PetClinicApplication {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SQLException {
 		var micrometerAttributes = new StringBuilder("");
 		System.getenv().forEach(new BiConsumer<String, String>() {
 			@Override
@@ -45,7 +47,7 @@ public class PetClinicApplication {
 
 		System.out.println("micrometer resource attributes = " + micrometerAttributes);
 		System.out.println("otel resource attributes = " + System.getenv("OTEL_RESOURCE_ATTRIBUTES"));
-		SpringApplication.run(PetClinicApplication.class, args);
+		ApplicationContext applicationContext = SpringApplication.run(PetClinicApplication.class, args);
 	}
 
 }
