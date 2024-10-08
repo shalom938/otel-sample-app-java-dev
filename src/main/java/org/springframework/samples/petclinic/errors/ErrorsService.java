@@ -26,6 +26,28 @@ public class ErrorsService
 		}
 	}
 
+	public void GenerateMultipleErrors()
+	{
+		for (int i = 0; i < 20; i++) {
+			RandomErrorThrower(i);
+		}
+	}
+
+	private void RandomErrorThrower(int errorType)
+	{
+		Span span = otelTracer.spanBuilder("RandomErrorThrower").startSpan();
+
+		try {
+			RandomErrorThrower.throwError(errorType);
+		}
+		catch (Exception e) {
+			span.recordException(e);
+			span.setStatus(StatusCode.ERROR);
+		}
+		finally {
+			span.end();
+		}
+	}
 	public void handleUnsupportedOperationException()
 	{
 		Span span = otelTracer.spanBuilder("handleUnsupportedOperationException").startSpan();
@@ -42,3 +64,5 @@ public class ErrorsService
 		}
 	}
 }
+
+

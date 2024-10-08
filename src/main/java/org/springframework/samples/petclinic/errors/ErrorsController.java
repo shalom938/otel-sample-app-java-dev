@@ -58,6 +58,11 @@ public class ErrorsController implements InitializingBean {
 		Utils.ThrowBadRequestException();
 	}
 
+	@GetMapping("error6")
+	public void error6() throws BadRequestException {
+		errorsService.GenerateMultipleErrors();
+	}
+
 	//ThrowBadRequestException
 
 	@GetMapping("/run-async")

@@ -23,6 +23,7 @@ public class ErrorTester {
 		myClient.execute("/error3", false);
 		myClient.execute("/error4", false);
 		myClient.execute("/error5", false);
+		myClient.execute("/error6", false);
 		myClient.execute("/run-async", false);
 
 
