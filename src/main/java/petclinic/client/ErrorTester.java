@@ -24,6 +24,9 @@ public class ErrorTester {
 		myClient.execute("/error4", false);
 		myClient.execute("/error5", false);
 		myClient.execute("/error6", false);
+		for (int i = 0; i < 10; i++) {
+			myClient.execute("/error7", false);
+		}
 		myClient.execute("/run-async", false);
 
 

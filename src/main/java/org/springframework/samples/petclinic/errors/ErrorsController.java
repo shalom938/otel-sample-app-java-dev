@@ -1,13 +1,19 @@
 package org.springframework.samples.petclinic.errors;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.api.trace.Tracer;
 import org.apache.coyote.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Random;
 
 @RestController
 @RequestMapping("/Errors")
@@ -62,9 +68,27 @@ public class ErrorsController implements InitializingBean {
 	public void error6() throws BadRequestException {
 		errorsService.GenerateMultipleErrors();
 	}
+	static Random random = new Random();
+	private static final Logger logger = LoggerFactory.getLogger(ErrorsController.class);
+
+	@GetMapping("error7")
+	public void error7() throws Throwable {
+		for (int i = 0; i < 100; i++) {
+			Span span = otelTracer.spanBuilder("error7").startSpan();
+			try {
+				RandomErrorThrower.generateAndThrowException("exception"+random.nextInt(3000) + 1,"message "+i);
+			}
+			catch (Exception e) {
+				span.recordException(e);
+				span.setStatus(StatusCode.ERROR);
+			}
+			finally {
+				span.end();
+			}
+		}
+	}
 
 	//ThrowBadRequestException
-
 	@GetMapping("/run-async")
 	public void runAsyncTask() {
 		asyncService.runMultipleAsyncTasks();

@@ -1,5 +1,13 @@
 package org.springframework.samples.petclinic.errors;
 
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
+import java.io.File;
+import java.io.FileWriter;
+import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.net.URLClassLoader;
+
 public class RandomErrorThrower {
 
 	// Custom exception classes
@@ -63,6 +71,7 @@ public class RandomErrorThrower {
 	static class CustomException20 extends Exception {
 	}
 
+
 	public static void throwError(int errorType) throws Exception {
 		switch (errorType) {
 			case 0:
@@ -109,4 +118,47 @@ public class RandomErrorThrower {
 				throw new Exception("Unexpected error type");
 		}
 	}
+
+
+	public static void generateAndThrowException(String className, String message) throws Throwable {
+		// Dynamically generate the class that extends Throwable
+		Class<?> exceptionClass = createThrowableClass(className);
+
+		// Create an instance of the dynamically generated class
+		Constructor<?> constructor = exceptionClass.getConstructor(String.class);
+		Throwable exceptionInstance = (Throwable) constructor.newInstance(message);
+
+		// Throw the exception
+		throw exceptionInstance;
+	}
+
+	private static Class<?> createThrowableClass(String className) throws Exception {
+		// Define the Java source code for the new exception class
+		String sourceCode =
+			"public class " + className + " extends java.lang.Exception { " +
+				"    public " + className + "(String message) { " +
+				"        super(message); " +
+				"    } " +
+				"} ";
+
+		// Write the source code to a .java file
+		String fileName = className + ".java";
+		try (FileWriter fileWriter = new FileWriter(fileName)) {
+			fileWriter.write(sourceCode);
+		}
+
+		// Compile the Java source file using the JavaCompiler API
+		JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+		int compilationResult = compiler.run(null, null, null, fileName);
+		if (compilationResult != 0) {
+			throw new RuntimeException("Compilation failed.");
+		}
+
+		// Load the compiled class into the JVM
+		File file = new File(".");
+		URL[] urls = new URL[]{file.toURI().toURL()};
+		URLClassLoader classLoader = new URLClassLoader(urls);
+		return classLoader.loadClass(className);
+	}
+
 }
