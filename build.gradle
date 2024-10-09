@@ -77,6 +77,22 @@ task runClientTester(type: JavaExec) {
     environment("PETSHOP_URL", "http://localhost:9753")
 }
 
+task runClientErrorsTester(type: JavaExec) {
+
+    outputs.upToDateWhen {false}
+
+    group = "Execution"
+    description = "Run Client Errors Tester"
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'petclinic.client.ErrorTester'
+    jvmArgs("-javaagent:build/otel/opentelemetry-javaagent.jar")
+    systemProperty("otel.service.name", "ClientErrorTester")
+    systemProperty("otel.traces.exporter", "otlp")
+    environment("OTEL_RESOURCE_ATTRIBUTES", "digma.environment=DEV")
+    systemProperty("otel.exporter.otlp.traces.endpoint", "http://localhost:5050")
+    environment("PETSHOP_URL", "http://localhost:9753")
+}
+
 bootTestRun {
     dependsOn("downloadOtelAgent")
     dependsOn("downloadDigmaAgentExtension")
