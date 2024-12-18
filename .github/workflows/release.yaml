@@ -33,22 +33,15 @@ jobs:
       - name: Build JAR
         run: ./gradlew bootJar downloadDigmaAgentExtension downloadOtelAgent
 
-      # Build Docker Image
-      - name: Build Docker Image
-        run: docker build -t petclinic:${{ github.ref_name }} .
+      - name: Copy Jar file
+        run: mv build/libs/spring-petclinic-*.jar petclinic-${{ github.ref_name }}.jar
 
-      # Save Docker Image as Artifact
-      - name: Save Docker Image
-        run: |
-          docker save petclinic:${{ github.ref_name }} > petclinic-${{ github.ref_name }}.tar
-          echo "Docker image saved as petclinic-${{ github.ref_name }}.tar"
-
-      - name: Upload Docker Image
+      - name: Upload Jar
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./petclinic-${{ github.ref_name }}.tar
-          asset_name: petclinic-${{ github.ref_name }}.tar
-          asset_content_type: application/x-tar
+          asset_path: ./petclinic-${{ github.ref_name }}.jar
+          asset_name: petclinic-${{ github.ref_name }}.jar
+          asset_content_type: application/java-archive
