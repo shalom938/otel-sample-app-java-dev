@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-slim
 EXPOSE 9753
 
 ENV OTEL_SERVICE_NAME=PetClinic
