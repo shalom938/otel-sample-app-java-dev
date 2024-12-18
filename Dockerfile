@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre-slim
+FROM adoptopenjdk:11-jre-hotspot
 EXPOSE 9753
 
 ENV OTEL_SERVICE_NAME=PetClinic
