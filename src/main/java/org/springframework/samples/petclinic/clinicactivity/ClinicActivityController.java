@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.samples.petclinic.model.ClinicActivityLog;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,7 +48,13 @@ public class ClinicActivityController implements InitializingBean {
         this.otelTracer = openTelemetry.getTracer("ClinicActivityController");
     }
 
-    @PostMapping("/populate-logs")
+	// This ep is here to throw error
+	@GetMapping("active-errors-ratio")
+	public int getActiveErrorsRatio() {
+		return dataService.getActiveLogsRatio("errors");
+	}
+
+	@PostMapping("/populate-logs")
     public ResponseEntity<String> populateData(@RequestParam(name = "count", defaultValue = "6000000") int count) {
         logger.info("Received request to populate {} clinic activity logs.", count);
         if (count <= 0) {
