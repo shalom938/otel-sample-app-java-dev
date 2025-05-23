@@ -24,4 +24,13 @@ public interface ClinicActivityLogRepository extends JpaRepository<ClinicActivit
         @Param("endDate") LocalDateTime endDate,
         @Param("statusFlag") Boolean statusFlag
     );
-} 
+
+    @Query("SELECT COUNT(1) FROM ClinicActivityLog cal WHERE cal.activityType = :activityType ")
+    int countLogsByType(
+        @Param("activityType") String activityType);
+
+    @Query("SELECT COUNT(1) FROM ClinicActivityLog cal WHERE cal.activityType = :activityType " +
+		   "AND cal.numericValue > 99999") // let's assume this condition means active
+    int countActiveLogsByType(
+        @Param("activityType") String activityType);
+}

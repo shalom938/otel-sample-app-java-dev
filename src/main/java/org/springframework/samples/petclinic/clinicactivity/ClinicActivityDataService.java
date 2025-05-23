@@ -4,6 +4,7 @@ import com.github.javafaker.Faker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.samples.petclinic.model.ClinicActivityLog;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -48,14 +49,21 @@ public class ClinicActivityDataService {
     private final Random random = new Random();
 
     @Autowired
-    public ClinicActivityDataService(ClinicActivityLogRepository repository, 
-                                     JdbcTemplate jdbcTemplate, 
+    public ClinicActivityDataService(ClinicActivityLogRepository repository,
+                                     JdbcTemplate jdbcTemplate,
                                      DataSource dataSource,
                                      PlatformTransactionManager transactionManager) {
         this.repository = repository;
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
         this.transactionManager = transactionManager;
+    }
+
+    @Transactional
+    public int getActiveLogsRatio(String type) {
+		var all = repository.countLogsByType(type);
+		var active = repository.countActiveLogsByType(type);
+		return active/all;
     }
 
     @Transactional
