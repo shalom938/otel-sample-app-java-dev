@@ -1,8 +1,9 @@
 package org.springframework.samples.petclinic.clinicfeedback;
 
 import org.springframework.samples.petclinic.model.ClinicFeedback;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/clinic-feedback")
@@ -14,15 +15,23 @@ public class FeedbackController {
 		this.service = service;
 	}
 
-	@GetMapping
-	public String getFeedback() {
-		var results = service.list();
-		return String.valueOf(results.size());
+	@GetMapping()
+	public List<ClinicFeedback> list(
+		@RequestParam(name = "page", defaultValue = "0") int page,
+		@RequestParam(name = "pageSize", defaultValue = "10") int pageSize
+	) {
+		var results = service.list(page, pageSize);
+		return results;
 	}
 
-	@PostMapping
-	public String submitFeedback() {
-		service.submit(new ClinicFeedback("achen@dig.ai", "bla bla"));
-		return "redirect:/";
+	@GetMapping("count")
+	public String count() {
+		return String.valueOf(service.count());
+	}
+
+	@PostMapping("populate")
+	public String populateFeedbacks(@RequestParam(name = "count", defaultValue = "10000") int count) {
+		service.populate(count);
+		return "done";
 	}
 }
