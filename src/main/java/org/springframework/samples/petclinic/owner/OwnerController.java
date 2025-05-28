@@ -15,8 +15,10 @@
  */
 package org.springframework.samples.petclinic.owner;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
@@ -28,17 +30,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.samples.petclinic.domain.OwnerValidation;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 import jakarta.validation.Valid;
@@ -69,9 +67,13 @@ class OwnerController implements InitializingBean {
 	}
 
 	private final OwnerRepository owners;
+	private final JdbcTemplate jdbcTemplate;
 
-	public OwnerController(OwnerRepository clinicService) {
+	public OwnerController(OwnerRepository clinicService, JdbcTemplate jdbcTemplate
+
+	) {
 		this.owners = clinicService;
+		this.jdbcTemplate = jdbcTemplate;
 	}
 
 	@InitBinder
@@ -211,4 +213,29 @@ class OwnerController implements InitializingBean {
 		return mav;
 	}
 
+	@GetMapping("/owners/{ownerId}/pets")
+	@ResponseBody
+	public String getOwnerPetsMap(@PathVariable("ownerId") int ownerId) {
+		String sql = "SELECT p.id AS pet_id, p.owner_id AS owner_id FROM pets p JOIN owners o ON p.owner_id = o.id";
+
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+
+		Map<Integer, List<Integer>> ownerToPetsMap = rows.stream()
+			.collect(Collectors.toMap(
+				row -> (Integer) row.get("owner_id"),
+				row -> List.of((Integer) row.get("pet_id"))  // Immutable list
+			));
+
+
+		List<Integer> pets = ownerToPetsMap.get(ownerId);
+
+		if (pets == null || pets.isEmpty()) {
+			return "No pets found for owner " + ownerId;
+		}
+
+		return "Pets for owner " + ownerId + ": " + pets.stream()
+			.map(String::valueOf)
+			.collect(Collectors.joining(", "));
+
+	}
 }
