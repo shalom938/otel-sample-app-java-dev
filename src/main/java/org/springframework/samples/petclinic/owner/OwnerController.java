@@ -220,15 +220,12 @@ class OwnerController implements InitializingBean {
 
 		List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
 
-		// Correct grouping using string keys and proper casting
 		Map<Integer, List<Integer>> ownerToPetsMap = rows.stream()
-			.collect(Collectors.groupingBy(
-				row -> (Integer) row.get("owner_id"),  // Correct key
-				Collectors.mapping(
-					row -> (Integer) row.get("pet_id"), // Correct value
-					Collectors.toList()
-				)
+			.collect(Collectors.toMap(
+				row -> (Integer) row.get("owner_id"),
+				row -> List.of((Integer) row.get("pet_id"))  // Immutable list
 			));
+
 
 		List<Integer> pets = ownerToPetsMap.get(ownerId);
 
