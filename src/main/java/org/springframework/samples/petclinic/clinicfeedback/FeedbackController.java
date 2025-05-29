@@ -29,6 +29,12 @@ public class FeedbackController {
 		return String.valueOf(service.count());
 	}
 
+	@PostMapping("clear")
+	public String clear() {
+		var deleted = service.clear();
+		return deleted + " feedbacks deleted";
+	}
+
 	@PostMapping("populate")
 	public String populateFeedbacks(@RequestParam(name = "count", defaultValue = "10000") int count) {
 		service.populate(count);

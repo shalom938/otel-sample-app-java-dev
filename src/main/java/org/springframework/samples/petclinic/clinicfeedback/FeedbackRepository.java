@@ -90,4 +90,25 @@ public class FeedbackRepository
 			throw new RuntimeException("Error during fetching feedback count", e);
 		}
 	}
+
+	public long clear() {
+		try {
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(this.apiBaseUrl))
+				.DELETE()
+				.build();
+
+			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+			if (response.statusCode() == 200) {
+				// Assuming API returns: { "deleted": 42 }
+				JsonNode node = objectMapper.readTree(response.body());
+				return node.get("deleted").asLong();
+			} else {
+				throw new RuntimeException("Failed to clear feedbacks. Status: " + response.statusCode());
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error during fetching feedback count", e);
+		}
+	}
 }

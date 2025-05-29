@@ -33,6 +33,10 @@ public class FeedbackService {
 		return repository.count();
 	}
 
+	public long clear() {
+		return repository.clear();
+	}
+
 	public List<ClinicFeedback> list(int page, int pageSize) {
 		return repository.findAll(Pageable.ofSize(pageSize).withPage(page));
 	}
