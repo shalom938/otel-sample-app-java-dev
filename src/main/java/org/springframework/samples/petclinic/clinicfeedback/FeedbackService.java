@@ -18,20 +18,15 @@ public class FeedbackService {
 		this.repository = repository;
 	}
 
-	public void submit(ClinicFeedback feedback) {
-		repository.save(feedback);
-	}
-
 	public void populate(int numberOfDocs){
-		List<ClinicFeedback> feedbacks = new ArrayList<>(numberOfDocs);
 		for (int i = 0; i < numberOfDocs; i++) {
 			var feedback = new ClinicFeedback(
 				lorem.getEmail(),
 				lorem.getParagraphs(1, 3)
 			);
-			feedbacks.add(feedback);
+			repository.save(feedback);
 		}
-		repository.saveAll(feedbacks);
+
 	}
 
 	public long count() {
@@ -39,6 +34,6 @@ public class FeedbackService {
 	}
 
 	public List<ClinicFeedback> list(int page, int pageSize) {
-		return repository.findAll(Pageable.ofSize(pageSize).withPage(page)).toList();
+		return repository.findAll(Pageable.ofSize(pageSize).withPage(page));
 	}
 }
