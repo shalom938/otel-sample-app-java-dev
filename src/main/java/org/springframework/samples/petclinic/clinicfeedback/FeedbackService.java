@@ -2,6 +2,7 @@ package org.springframework.samples.petclinic.clinicfeedback;
 
 import com.thedeanda.lorem.Lorem;
 import com.thedeanda.lorem.LoremIpsum;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import org.springframework.data.domain.Pageable;
 import org.springframework.samples.petclinic.model.ClinicFeedback;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class FeedbackService {
 		this.repository = repository;
 	}
 
+	@WithSpan
 	public void populate(int numberOfDocs){
 		for (int i = 0; i < numberOfDocs; i++) {
 			var feedback = new ClinicFeedback(
@@ -26,7 +28,6 @@ public class FeedbackService {
 			);
 			repository.save(feedback);
 		}
-
 	}
 
 	public long count() {

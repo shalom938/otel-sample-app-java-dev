@@ -33,6 +33,7 @@ public class FeedbackRepository
 	}
 
 	public void save(ClinicFeedback feedback) {
+		HttpResponse<String> response;
 		try {
 			String json = objectMapper.writeValueAsString(feedback);
 			var request = HttpRequest.newBuilder()
@@ -41,12 +42,13 @@ public class FeedbackRepository
 				.POST(HttpRequest.BodyPublishers.ofString(json))
 				.build();
 
-			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			if (response.statusCode() != 200 && response.statusCode() != 201) {
-				throw new RuntimeException("Failed to save feedbacks to flaskdb: " + response.body());
-			}
+			response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 		} catch (Exception e) {
 			throw new RuntimeException("Error during saving feedbacks", e);
+		}
+
+		if (response.statusCode() != 200 && response.statusCode() != 201) {
+			throw new RuntimeException("Failed to save feedbacks to flaskdb: " + response.body());
 		}
 	}
 
