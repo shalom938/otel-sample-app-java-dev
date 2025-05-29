@@ -43,7 +43,7 @@ public class FeedbackRepository
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 			if (response.statusCode() != 200 && response.statusCode() != 201) {
-				throw new RuntimeException("Failed to save feedbacks. Status: " + response.statusCode());
+				throw new RuntimeException("Failed to save feedbacks to flaskdb: " + response.body());
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("Error during saving feedbacks", e);
