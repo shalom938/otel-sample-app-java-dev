@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{fragments/layout :: layout (~{::body},'activity')}">
+<body>
+    <h1>Clinic Activity Logs</h1>
+    <div id="loader" style="display:none;">Loading...</div>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <table id="logsTable" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Activity Type</th>
+                <!-- Numeric Value column hidden -->
+                <th>Event Timestamp</th>
+                <th>Status Flag</th>
+                <!-- Payload column hidden -->
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script th:inline="javascript">
+        function fetchData() {
+            $('#loader').show();
+            $.getJSON('/api/clinic-activity/query-logs', function(data) {
+                $('#loader').hide();
+                $('#logsTable').DataTable({
+                    data: data,
+                    destroy: true,
+                    columns: [
+                        { data: 'id' },
+                        { data: 'activity_type' },
+                        { data: 'event_timestamp' },
+                        { data: 'status_flag' }
+                    ]
+                });
+            });
+        }
+        $(document).ready(function() {
+            fetchData();
+        });
+    </script>
+</body>
+</html> 

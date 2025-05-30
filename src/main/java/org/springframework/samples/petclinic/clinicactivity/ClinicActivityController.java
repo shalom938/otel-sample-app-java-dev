@@ -69,42 +69,16 @@ public class ClinicActivityController implements InitializingBean {
         }
     }
 
-    @GetMapping("/query-logs")
-    public ResponseEntity<String> getLogs(
-            @RequestParam(name = "repetitions", defaultValue = "100") int repetitions) {
-
-        if (repetitions <= 0) {
-            return ResponseEntity.badRequest().body("Repetitions must be a positive integer.");
-        }
-
+    @GetMapping(value = "/query-logs", produces = "application/json")
+    public List<Map<String, Object>> getLogs(
+            @RequestParam(name = "repetitions", defaultValue = "1") int repetitions) {
         int numericValueToTest = 50000;
         String sql = "SELECT id, activity_type, numeric_value, event_timestamp, status_flag, payload FROM clinic_activity_logs WHERE numeric_value = ?";
-
-        logger.info("Executing direct JDBC query for numeric_value = {}, {} times.", numericValueToTest, repetitions);
-
-        long totalTimeForAllRepetitionsNanos = 0;
-        int rowsFoundLastCall = 0;
-        List<Map<String, Object>> lastResults; // To store results from the last call
-
+        List<Map<String, Object>> lastResults = null;
         for (int i = 0; i < repetitions; i++) {
-            long startTimeNanos = System.nanoTime();
             lastResults = jdbcTemplate.queryForList(sql, numericValueToTest);
-            long endTimeNanos = System.nanoTime();
-            totalTimeForAllRepetitionsNanos += (endTimeNanos - startTimeNanos);
-            if (i == repetitions - 1) { // Get row count from the last execution
-                 rowsFoundLastCall = lastResults.size();
-            }
         }
-
-        long totalDurationMillis = totalTimeForAllRepetitionsNanos / 1_000_000;
-
-        String message = String.format(
-            "Executed JDBC query for numeric_value = %d, %d time(s). Last call found %d rows. Total execution time: %d ms.",
-            numericValueToTest, repetitions, rowsFoundLastCall, totalDurationMillis
-        );
-        logger.info(message);
-
-        return ResponseEntity.ok(message);
+        return lastResults;
     }
 
     @DeleteMapping("/cleanup-logs")
