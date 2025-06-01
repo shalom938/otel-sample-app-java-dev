@@ -74,7 +74,7 @@ public interface OwnerRepository extends Repository<Owner, Integer> {
 
 	@Query("SELECT SIZE(o.pets) FROM Owner o WHERE o.id = :id")
 	@Transactional(readOnly = true)
-	int countPets();
+	int countPets(int id);
 
 	/**
 	 * Returns all the owners from data store
