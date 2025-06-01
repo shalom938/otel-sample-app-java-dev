@@ -58,6 +58,8 @@ class OwnerController implements InitializingBean {
 	private OpenTelemetry openTelemetry;
 
 	private Tracer otelTracer;
+	@Autowired
+	private OwnerRepository ownerRepository;
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -91,6 +93,10 @@ class OwnerController implements InitializingBean {
 		Owner owner = new Owner();
 		validator.ValidateOwnerWithExternalService(owner);
 		model.put("owner", owner);
+		var petCount = ownerRepository.countPets();
+		var totalVists = owner.getPets().stream().mapToLong(pet-> pet.getVisits().size())
+				.sum();
+		var averageCisits = totalVists/petCount;
 		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
