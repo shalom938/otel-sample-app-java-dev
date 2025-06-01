@@ -93,7 +93,7 @@ class OwnerController implements InitializingBean {
 		Owner owner = new Owner();
 		validator.ValidateOwnerWithExternalService(owner);
 		model.put("owner", owner);
-		var petCount = ownerRepository.countPets();
+		var petCount = ownerRepository.countPets(owner.getId());
 		var totalVists = owner.getPets().stream().mapToLong(pet-> pet.getVisits().size())
 				.sum();
 		var averageCisits = totalVists/petCount;
