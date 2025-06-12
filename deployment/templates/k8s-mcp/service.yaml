@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-k8s-mcp
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Release.Name }}-k8s-mcp
+  ports:
+    - name: sse-port
+      protocol: TCP
+      port: 6789
+      targetPort: 6789

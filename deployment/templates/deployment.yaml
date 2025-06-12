@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclinic
+  labels:
+    app.kubernetes.io/component: petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: petclinic
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: petclinic
+    spec:
+      initContainers:
+      - name: download-image
+        image: alpine:latest # # Lightweight image for downloading files
+        securityContext:
+          privileged: true
+        command:
+          - /bin/sh
+          - -c
+          - |
+            apk add --no-cache curl
+            curl -L -o /app/opentelemetry-javaagent.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v1.32.0/opentelemetry-javaagent.jar
+            curl -L -o /app/digma-otel-agent-extension.jar https://github.com/digma-ai/otel-java-instrumentation/releases/latest/download/digma-otel-agent-extension.jar
+            curl -L -o /app/petclinic.jar {{ .Values.petclinic.jarUrl }}
+            echo "JAR file downloaded successfully."
+        volumeMounts:
+        - name: app-volume
+          mountPath: /app
+      containers:
+      - name: petclinic
+        image: eclipse-temurin:21
+        command:
+          - java
+          - -Dotel.instrumentation.common.experimental.controller.telemetry.enabled=true 
+          - -Dotel.instrumentation.common.experimental.view.telemetry.enabled=true 
+          - -Dotel.instrumentation.experimental.span-suppression-strategy=none
+          - -jar
+          - -javaagent:/app/opentelemetry-javaagent.jar
+          - -Dotel.javaagent.extensions=/app/digma-otel-agent-extension.jar 
+          - /app/petclinic.jar
+        ports:
+        - containerPort: 9753
+        env:
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          value: api-key=24fde629b3411b44f8805c2eb7362daaFFFFNRAL
+        - name: OTEL_SERVICE_NAME
+          value: {{.Values.service_name}}
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: {{ printf "digma.environment=%s,digma.environment.type=%s" .Values.environment .Values.environment_type }}
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://{{ .Release.Name }}-opentelemetry-collector:4317/"
+        - name: SPRING_PROFILES_ACTIVE
+          value: "postgres"
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "{{ .Values.postgresql.auth.username }}"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "{{ .Values.postgresql.auth.password }}"
+        - name: SPRING_DATA_FLASKDB_URI
+          value: http://{{ .Release.Name }}-flaskdb:27017/feedbacks
+        volumeMounts:
+        - name: app-volume
+          mountPath: /app
+      volumes:
+      - name: app-volume
+        emptyDir: {}

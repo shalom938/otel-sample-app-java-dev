@@ -1,0 +1,5 @@
+service_name: petclinic
+environment: PETCLINIC-DIGMA
+environment_type: Public
+otlp_endpoint: http://meloona-digma-ng-otel-collector.meloona.svc.cluster.local:4317
+

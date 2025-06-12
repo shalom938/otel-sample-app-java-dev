@@ -1,0 +1,11 @@
+{{- if .Values.flaskdb.enabled }}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-app-config
+data:
+  app.py: |
+    {{ .Files.Get "files/flask-app.py" | nindent 4 }}
+
+{{- end }}

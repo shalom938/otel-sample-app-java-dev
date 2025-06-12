@@ -1,0 +1,88 @@
+service_name: petclinic
+environment: AGENTIC
+environment_type: Public
+
+#http://lac-digma-ng-otel-collector.lac.svc.cluster.local:4317
+#otlp_endpoint: https://otlp.nr-data.net
+
+opentelemetry-collector:
+  mode: deployment
+  image:
+    repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
+  config:
+    exporters:
+      otlp:
+        endpoint: http://lac-digma-ng-otel-collector.lac.svc.cluster.local:4317
+        tls:
+          insecure: true
+      otlphttp:
+        endpoint: https://otlp.nr-data.net
+        headers:
+          api-key: 24fde629b3411b44f8805c2eb7362daaFFFFNRAL
+    receivers:
+      jaeger: null
+      prometheus: null
+      zipkin: null
+    service:
+      pipelines:
+        traces:
+          receivers:
+            - otlp
+          exporters:
+            - otlp
+            - otlphttp
+        metrics: null
+        logs: null
+  ports:
+    jaeger-compact:
+      enabled: false
+    jaeger-thrift:
+      enabled: false
+    jaeger-grpc:
+      enabled: false
+    zipkin:
+      enabled: false
+
+redis:
+  enabled: true
+
+postgresql:
+  enabled: true
+  auth:
+    database: petclinic
+    username: postgres
+    password: postgres
+    enablePostgresUser: false
+  architecture: standalone
+  containerPorts:
+    postgresql: 5432
+  primary:
+    resources:
+      requests:
+        memory: 1024Mi
+        cpu: 0.5
+      limits:
+        memory: 1650Mi
+        cpu: 1
+    networkPolicy:
+      enabled: false
+    livenessProbe:
+      failureThreshold: 10
+      initialDelaySeconds: 60
+      periodSeconds: 60
+    readinessProbe:
+      failureThreshold: 10
+      initialDelaySeconds: 60
+      periodSeconds: 60
+    service:
+      ports:
+        postgresql: 5432
+    persistence:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      size: 50Gi
+
+
+flaskdb:
+  enabled: true

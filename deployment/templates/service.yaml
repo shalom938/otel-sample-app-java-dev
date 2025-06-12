@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: petclinic
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/component: petclinic
+  ports:
+    - name: http
+      protocol: TCP
+      port: 9753
+      targetPort: 9753

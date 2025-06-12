@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-k8s-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-k8s-mcp
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-k8s-mcp
+    spec:
+      serviceAccountName: {{ .Release.Name }}-k8s-mcp
+      containers:
+      - name: k8s-mcp
+        image: ubuntu:22.04
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            apt update && apt install -y curl;
+            curl -L -o /usr/local/bin/mcp-server https://github.com/manusa/kubernetes-mcp-server/releases/download/v0.0.37/kubernetes-mcp-server-linux-arm64;
+            chmod +x /usr/local/bin/mcp-server;
+            /usr/local/bin/mcp-server --sse-port 6789
+        ports:
+        - containerPort: 6789
+          name: sse-port       
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+
+
+
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-k8s-mcp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-k8s-mcp-full-access
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-k8s-mcp-full-access
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-k8s-mcp
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Release.Name }}-k8s-mcp-full-access
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,18 @@
+apiVersion: v2
+name: petclinic
+version: 1.0.1
+
+dependencies:
+  - name: postgresql
+    version: 16.2.1
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    repository: oci://registry-1.docker.io/bitnamicharts
+    version: 20.3.0
+    condition: redis.enabled
+  - name: opentelemetry-collector
+    repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+    mode: deployment
+    image.repository: "otel/opentelemetry-collector-k8s"
+    version: 0.126.0

@@ -1,0 +1,51 @@
+{{- if .Values.flaskdb.enabled }}
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-flaskdb
+  labels:
+    app.kubernetes.io/component: {{ .Release.Name }}-flaskdb
+spec:
+  serviceName: {{ .Release.Name }}-flaskdb
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: {{ .Release.Name }}-flaskdb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: {{ .Release.Name }}-flaskdb
+    spec:
+      containers:
+        - name: flask-container
+          image: python:3.11-slim
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              pip install flask &&
+              python /app/app.py
+          env:
+            - name: DATA_DIR
+              value: /data/db
+          ports:
+          - containerPort: 27017
+          volumeMounts:
+            - name: flask-source
+              mountPath: /app
+            - name: flaskdb-data
+              mountPath: /data/db
+      volumes:
+        - name: flask-source
+          configMap:
+            name: flask-app-config
+  volumeClaimTemplates:
+    - metadata:
+        name: flaskdb-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+
+{{- end }}

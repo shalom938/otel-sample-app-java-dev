@@ -1,0 +1,41 @@
+service_name: petclinic
+environment: PETCLINIC-DIGMA
+environment_type: Public
+otlp_endpoint: http://lac-digma-ng-otel-collector.lac.svc.cluster.local:4317
+
+mode: deployment
+image:
+  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s
+
+petclinic:
+  jarUrl: https://github.com/digma-ai/otel-sample-app-java/releases/download/0.0.15/petclinic-0.0.15.jar
+
+flaskdb:
+  enabled: false
+
+redis:
+  enabled: false
+  auth:
+    enabled: false
+  architecture: standalone
+  master:
+    extraFlags:
+      - --maxmemory 2g
+      - --maxmemory-policy allkeys-lru
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 500m
+      limits:
+        memory: 768Mi
+        cpu: 750m
+    persistence:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      size: 5Gi
+    podLabels: {}
+    podAnnotations: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}

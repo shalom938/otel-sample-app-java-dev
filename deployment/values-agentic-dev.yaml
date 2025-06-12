@@ -1,0 +1,48 @@
+service_name: petclinic
+environment: AGENTIC-DEV
+environment_type: Public
+otlp_endpoint: http://shay-digma-ng-otel-collector.shay.svc.cluster.local:4317
+
+petclinic:
+  jarUrl: https://github.com/digma-ai/otel-sample-app-java-dev/releases/download/v0.0.4/petclinic-v0.0.4.jar
+
+postgresql:
+  enabled: true
+  auth:
+    database: petclinic
+    username: postgres
+    password: postgres
+    enablePostgresUser: false
+  architecture: standalone
+  containerPorts:
+    postgresql: 5432
+  primary:
+    resources:
+      requests:
+        memory: 1024Mi
+        cpu: 0.5
+      limits:
+        memory: 1650Mi
+        cpu: 1
+    networkPolicy:
+      enabled: false
+    livenessProbe:
+      failureThreshold: 10
+      initialDelaySeconds: 60
+      periodSeconds: 60
+    readinessProbe:
+      failureThreshold: 10
+      initialDelaySeconds: 60
+      periodSeconds: 60
+    service:
+      ports:
+        postgresql: 5432
+    persistence:
+      enabled: true
+      accessModes:
+        - ReadWriteOnce
+      size: 50Gi
+
+
+flaskdb:
+  enabled: true
