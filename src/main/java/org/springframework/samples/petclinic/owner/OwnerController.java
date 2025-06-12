@@ -169,10 +169,7 @@ class OwnerController implements InitializingBean {
 	@GetMapping("/owners/{ownerId}/edit")
 	public String initUpdateOwnerForm(@PathVariable("ownerId") int ownerId, Model model) {
 		Owner owner = this.owners.findById(ownerId);
-		var petCount = ownerRepository.countPets(owner.getId());
-		var totalVists = owner.getPets().stream().mapToLong(pet-> pet.getVisits().size())
-			.sum();
-		var averageCisits = totalVists/petCount;
+
 		model.addAttribute(owner);
 		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
 	}
