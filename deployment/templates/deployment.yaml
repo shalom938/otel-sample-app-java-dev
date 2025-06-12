@@ -57,7 +57,7 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: "postgres"
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:postgresql://{{ .Release.Name }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+          value: "jdbc:postgresql://{{ .Release.Name }}-postgresql:5433/{{ .Values.postgresql.auth.database }}"
         - name: SPRING_DATASOURCE_USERNAME
           value: "{{ .Values.postgresql.auth.username }}"
         - name: SPRING_DATASOURCE_PASSWORD
