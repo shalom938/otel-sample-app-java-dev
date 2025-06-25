@@ -9,8 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.InvalidPropertiesFormatException;
 
-@Component
-public class MonitorService implements SmartLifecycle {
+@Componentpublic class MonitorService implements SmartLifecycle {
 
 	private boolean running = false;
 	private Thread backgroundThread;
@@ -24,19 +23,21 @@ public class MonitorService implements SmartLifecycle {
 		running = true;
 		backgroundThread = new Thread(() -> {
 			while (running) {
-
 				try {
 					Thread.sleep(5000);
 				} catch (InterruptedException e) {
+					Logger.error("Monitoring thread interrupted", e);
 					throw new RuntimeException(e);
 				}
 				Span span = otelTracer.spanBuilder("monitor").startSpan();
 
 				try {
-
-					System.out.println("Background service is running...");
+					Logger.info("Executing system health check...");
 					monitor();
+					Metrics.counter("system.health.check.success").increment();
 				} catch (Exception e) {
+					Logger.error("System health check failed", e);
+					Metrics.counter("system.health.check.failure").increment();
 					span.recordException(e);
 					span.setStatus(StatusCode.ERROR);
 				} finally {
@@ -47,14 +48,28 @@ public class MonitorService implements SmartLifecycle {
 
 		// Start the background thread
 		backgroundThread.start();
-		System.out.println("Background service started.");
+		Logger.info("System health monitoring service started.");
+	}private void monitor() {
+		try {
+			// Check CPU usage
+			Double cpuUsage = SystemMetrics.getCPUUsage();
+			// Check memory usage
+			Long memoryUsage = SystemMetrics.getMemoryUsage();
+			// Check disk space
+			Long diskSpace = SystemMetrics.getDiskSpace();
+
+			// Log system health metrics
+			Logger.info("System Health Metrics - CPU: {}%, Memory: {} MB, Disk: {} GB",
+				cpuUsage, memoryUsage/1024/1024, diskSpace/1024/1024/1024);
+
+			// Alert if metrics exceed thresholds
+			if (cpuUsage > 90 || memoryUsage > 0.9 * Runtime.getRuntime().maxMemory()) {
+				Logger.warn("System resources reaching critical levels");
+			}
+		} catch (Exception e) {
+			Logger.error("Error monitoring system health: {}", e.getMessage());
+		}
 	}
-
-	private void monitor() throws InvalidPropertiesFormatException {
-		Utils.throwException(IllegalStateException.class,"monitor failure");
-	}
-
-
 
 	@Override
 	public void stop() {
