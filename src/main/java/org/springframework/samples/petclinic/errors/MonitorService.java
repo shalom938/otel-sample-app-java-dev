@@ -9,69 +9,99 @@ import org.springframework.stereotype.Component;
 
 import java.util.InvalidPropertiesFormatException;
 
-@Component
-public class MonitorService implements SmartLifecycle {
+@Componentpublic class MonitorService implements SmartLifecycle {
 
-	private boolean running = false;
-	private Thread backgroundThread;
-	@Autowired
-	private OpenTelemetry openTelemetry;
+    private volatile boolean running = false;
+    private Thread backgroundThread;
+    private final Object stateLock = new Object();
+    private static final Logger logger = LoggerFactory.getLogger(MonitorService.class);
 
-	@Override
-	public void start() {
-		var otelTracer = openTelemetry.getTracer("MonitorService");
+    @Autowired
+    private OpenTelemetry openTelemetry;
 
-		running = true;
-		backgroundThread = new Thread(() -> {
-			while (running) {
+    @Override
+    public void start() {
+        synchronized(stateLock) {
+            if (running) {
+                logger.warn("Monitor service is already running");
+                return;
+            }
 
-				try {
-					Thread.sleep(5000);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-				Span span = otelTracer.spanBuilder("monitor").startSpan();
+            var otelTracer = openTelemetry.getTracer("MonitorService");
+            running = true;
 
-				try {
+            backgroundThread = new Thread(() -> {
+                logger.info("Monitor service thread starting");
+                while (!Thread.currentThread().isInterrupted() && running) {
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        logger.warn("Monitor service thread interrupted", e);
+                        break;
+                    }
 
-					System.out.println("Background service is running...");
-					monitor();
-				} catch (Exception e) {
-					span.recordException(e);
-					span.setStatus(StatusCode.ERROR);
-				} finally {
-					span.end();
-				}
-			}
-		});
+                    Span span = otelTracer.spanBuilder("monitor").startSpan();
+                    try {
+                        logger.debug("Executing monitor cycle");
+                        monitor();
+                    } catch (Exception e) {
+                        logger.error("Error during monitoring", e);
+                        span.recordException(e);
+                        span.setStatus(StatusCode.ERROR);
+                    } finally {
+                        span.end();
+                    }
+                }
+                logger.info("Monitor service thread stopping");
+            }, "MonitorService-Thread");
 
-		// Start the background thread
-		backgroundThread.start();
-		System.out.println("Background service started.");
-	}
+            backgroundThread.setDaemon(true);
+            backgroundThread.start();
+            logger.info("Monitor service started successfully");
+        }
+    }private synchronized void monitor() {
+    if (!running) {
+        logger.warn("Monitor called while service is not running");
+        return;
+    }
+    
+    try {
+        // Add actual monitoring logic here
+        logger.debug("Monitoring execution completed successfully");
+    } catch (Exception e) {
+        logger.error("Monitor execution failed", e);
+        throw new IllegalStateException("Monitor execution failed", e);
+    }
+}
 
-	private void monitor() throws InvalidPropertiesFormatException {
-		Utils.throwException(IllegalStateException.class,"monitor failure");
-	}
+@Override
+public synchronized void stop() {
+    if (!running) {
+        logger.warn("Stop called while service is already stopped");
+        return;
+    }
+    
+    running = false;
+    logger.info("Stopping background service");
+    
+    if (backgroundThread != null) {
+        try {
+            backgroundThread.join(THREAD_TIMEOUT_MS);
+            if (backgroundThread.isAlive()) {
+                logger.warn("Background thread did not terminate within timeout");
+            }
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while waiting for background thread to stop", e);
+            Thread.currentThread().interrupt();
+        }
+    }
+    
+    logger.info("Background service stopped successfully");
+}
 
-
-
-	@Override
-	public void stop() {
-		// Stop the background task
-		running = false;
-		if (backgroundThread != null) {
-			try {
-				backgroundThread.join(); // Wait for the thread to finish
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
-		System.out.println("Background service stopped.");
-	}
-
-	@Override
-	public boolean isRunning() {
-		return false;
-	}
+@Override
+public synchronized boolean isRunning() {
+    return running;
+}
 }
