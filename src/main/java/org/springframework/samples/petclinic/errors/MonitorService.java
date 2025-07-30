@@ -33,7 +33,6 @@ public class MonitorService implements SmartLifecycle {
 				Span span = otelTracer.spanBuilder("monitor").startSpan();
 
 				try {
-
 					System.out.println("Background service is running...");
 					monitor();
 				} catch (Exception e) {
@@ -51,10 +50,14 @@ public class MonitorService implements SmartLifecycle {
 	}
 
 	private void monitor() throws InvalidPropertiesFormatException {
-		Utils.throwException(IllegalStateException.class,"monitor failure");
+		if (!running) {
+			throw new IllegalStateException("Monitor service is not running. Please ensure the service is started before monitoring.");
+		}
+		
+		// Add actual monitoring logic here
+		// For now, we'll just log the monitoring status
+		System.out.println("Monitor service is healthy and running");
 	}
-
-
 
 	@Override
 	public void stop() {
@@ -72,6 +75,6 @@ public class MonitorService implements SmartLifecycle {
 
 	@Override
 	public boolean isRunning() {
-		return false;
+		return running;
 	}
 }
