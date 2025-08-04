@@ -18,9 +18,7 @@ package org.springframework.samples.petclinic.owner;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import io.opentelemetry.api.OpenTelemetry;
+import java.util.stream.Collectors;import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.Tracer;
@@ -30,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.samples.petclinic.domain.OwnerValidation;
 import org.springframework.stereotype.Controller;
@@ -37,17 +36,18 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
-import jakarta.validation.Valid;
-
-/**
+import jakarta.validation.Valid;/**
  * @author Juergen Hoeller
  * @author Ken Krebs
  * @author Arjen Poutsma
  * @author Michael Isvy
  */
-@Controller
+@Controllerimport org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 class OwnerController implements InitializingBean {
 
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
@@ -81,39 +81,44 @@ class OwnerController implements InitializingBean {
 	@InitBinder
 	public void setAllowedFields(WebDataBinder dataBinder) {
 		dataBinder.setDisallowedFields("id");
-	}
+	}@ModelAttribute("owner")
+public Owner findOwner(@PathVariable(name = "ownerId", required = false) Integer ownerId) {
+    if (ownerId == null) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Owner ID cannot be null");
+    }
+    
+    Owner owner = this.owners.findById(ownerId);
+    if (owner == null) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found with ID: " + ownerId);
+    }
+    
+    return owner;
+}
 
-	@ModelAttribute("owner")
-	public Owner findOwner(@PathVariable(name = "ownerId", required = false) Integer ownerId) {
-		return ownerId == null ? new Owner() : this.owners.findById(ownerId);
-	}
+@GetMapping("/owners/new")
+public String initCreationForm(Map<String, Object> model) {
+    Owner owner = new Owner();
+    validator.ValidateOwnerWithExternalService(owner);
+    model.put("owner", owner);
 
-	@GetMapping("/owners/new")
-	public String initCreationForm(Map<String, Object> model) {
-		Owner owner = new Owner();
-		validator.ValidateOwnerWithExternalService(owner);
-		model.put("owner", owner);
+    validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 
-		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
+    return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+}
 
-		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
-	}
+@PostMapping("/owners/new")
+public String processCreationForm(@Valid Owner owner, BindingResult result) {
+    if (result.hasErrors()) {
+        return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+    }
+    validator.ValidateOwnerWithExternalService(owner);
+    validator.PerformValidationFlow(owner);
 
-	@PostMapping("/owners/new")
-	public String processCreationForm(@Valid Owner owner, BindingResult result) {
-		if (result.hasErrors()) {
-			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
-		}
-		validator.ValidateOwnerWithExternalService(owner);
-		validator.PerformValidationFlow(owner);
-
-		validator.checkOwnerValidity(owner);
-		this.owners.save(owner);
-		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
-		return "redirect:/owners/" + owner.getId();
-	}
-
-	@GetMapping("/owners/find")
+    validator.checkOwnerValidity(owner);
+    this.owners.save(owner);
+    validator.ValidateUserAccess("admin", "pwd", "fullaccess");
+    return "redirect:/owners/" + owner.getId();
+}@GetMapping("/owners/find")
 	public String initFindForm() {
 		return "owners/findOwners";
 	}
@@ -121,29 +126,43 @@ class OwnerController implements InitializingBean {
 	@GetMapping("/owners")
 	public String processFindForm(@RequestParam(defaultValue = "1") int page, Owner owner, BindingResult result,
 			Model model) {
+		try {
+			if (owner == null) {
+				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Owner cannot be null");
+			}
 
-		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
+			try {
+				validator.ValidateUserAccess("admin", "pwd", "fullaccess");
+			} catch (Exception e) {
+				throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user access", e);
+			}
 
-		// allow parameterless GET request for /owners to return all records
-		if (owner.getLastName() == null) {
-			owner.setLastName(""); // empty string signifies broadest possible search
+			// allow parameterless GET request for /owners to return all records
+			if (owner.getLastName() == null) {
+				owner.setLastName(""); // empty string signifies broadest possible search
+			}
+
+			// find owners by last name
+			Page<Owner> ownersResults = findPaginatedForOwnersLastName(page, owner.getLastName());
+			if (ownersResults == null || ownersResults.isEmpty()) {
+				// no owners found
+				result.rejectValue("lastName", "notFound", "not found");
+				return "owners/findOwners";
+			}
+
+			if (ownersResults.getTotalElements() == 1) {
+				// 1 owner found
+				owner = ownersResults.iterator().next();
+				return "redirect:/owners/" + owner.getId();
+			}
+
+			return "owners/ownersList";
+		} catch (ResponseStatusException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing find form", e);
 		}
-
-		// find owners by last name
-		Page<Owner> ownersResults = findPaginatedForOwnersLastName(page, owner.getLastName());
-		if (ownersResults.isEmpty()) {
-			// no owners found
-			result.rejectValue("lastName", "notFound", "not found");
-			return "owners/findOwners";
-		}
-
-		if (ownersResults.getTotalElements() == 1) {
-			// 1 owner found
-			owner = ownersResults.iterator().next();
-			return "redirect:/owners/" + owner.getId();
-		}
-
-		// multiple owners found
+	}// multiple owners found
 		return addPaginationModel(page, model, ownersResults);
 	}
 
@@ -164,41 +183,41 @@ class OwnerController implements InitializingBean {
 		int pageSize = 5;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
 		return owners.findByLastName(lastname, pageable);
-	}
+	}@GetMapping("/owners/{ownerId}/edit")
+public String initUpdateOwnerForm(@PathVariable("ownerId") int ownerId, Model model) {
+    Owner owner = this.owners.findById(ownerId);
+    if (owner == null) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found with ID: " + ownerId);
+    }
+    var petCount = ownerRepository.countPets(owner.getId());
+    var totalVisits = owner.getPets().stream().mapToLong(pet -> pet.getVisits().size())
+        .sum();
+    var averageVisits = petCount > 0 ? totalVisits/petCount : 0;
+    model.addAttribute(owner);
+    return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+}
 
-	@GetMapping("/owners/{ownerId}/edit")
-	public String initUpdateOwnerForm(@PathVariable("ownerId") int ownerId, Model model) {
-		Owner owner = this.owners.findById(ownerId);
-		var petCount = ownerRepository.countPets(owner.getId());
-		var totalVists = owner.getPets().stream().mapToLong(pet-> pet.getVisits().size())
-			.sum();
-		var averageCisits = totalVists/petCount;
-		model.addAttribute(owner);
-		return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
-	}
+private static void delay(long millis) {
+    try {
+        Thread.sleep(millis);
+    }
+    catch (InterruptedException e) {
+        Thread.interrupted();
+    }
+}
 
-	private static void delay(long millis) {
-		try {
-			Thread.sleep(millis);
-		}
-		catch (InterruptedException e) {
-			Thread.interrupted();
-		}
-	}
+@PostMapping("/owners/{ownerId}/edit")
+public String processUpdateOwnerForm(@Valid Owner owner, BindingResult result,
+        @PathVariable("ownerId") int ownerId) {
+    if (result.hasErrors()) {
+        return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
+    }
 
-	@PostMapping("/owners/{ownerId}/edit")
-	public String processUpdateOwnerForm(@Valid Owner owner, BindingResult result,
-			@PathVariable("ownerId") int ownerId) {
-		if (result.hasErrors()) {
-			return VIEWS_OWNER_CREATE_OR_UPDATE_FORM;
-		}
+    owner.setId(ownerId);
+    validator.checkOwnerValidity(owner);
 
-		owner.setId(ownerId);
-		validator.checkOwnerValidity(owner);
-
-		validator.ValidateOwnerWithExternalService(owner);
-
-		validator.PerformValidationFlow(owner);
+    validator.ValidateOwnerWithExternalService(owner);
+validator.PerformValidationFlow(owner);
 		this.owners.save(owner);
 		return "redirect:/owners/{ownerId}";
 	}
@@ -210,14 +229,24 @@ class OwnerController implements InitializingBean {
 	 */
 	@GetMapping("/owners/{ownerId}")
 	public ModelAndView showOwner(@PathVariable("ownerId") int ownerId) {
-		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
+		try {
+			validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 
-		ModelAndView mav = new ModelAndView("owners/ownerDetails");
-		Owner owner = this.owners.findById(ownerId);
-		validator.ValidateOwnerWithExternalService(owner);
+			Owner owner = this.owners.findById(ownerId);
+			if (owner == null) {
+				throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found with ID: " + ownerId);
+			}
 
-		mav.addObject(owner);
-		return mav;
+			validator.ValidateOwnerWithExternalService(owner);
+
+			ModelAndView mav = new ModelAndView("owners/ownerDetails");
+			mav.addObject(owner);
+			return mav;
+		} catch (ResponseStatusException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error processing owner details", e);
+		}
 	}
 
 	@GetMapping("/owners/{ownerId}/pets")
@@ -225,9 +254,7 @@ class OwnerController implements InitializingBean {
 	public String getOwnerPetsMap(@PathVariable("ownerId") int ownerId) {
 		String sql = "SELECT p.id AS pet_id, p.owner_id AS owner_id FROM pets p JOIN owners o ON p.owner_id = o.id";
 
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
-
-		Map<Integer, List<Integer>> ownerToPetsMap = rows.stream()
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);Map<Integer, List<Integer>> ownerToPetsMap = rows.stream()
 			.collect(Collectors.toMap(
 				row -> (Integer) row.get("owner_id"),
 				row -> List.of((Integer) row.get("pet_id"))  // Immutable list
