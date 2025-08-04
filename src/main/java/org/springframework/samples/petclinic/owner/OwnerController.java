@@ -245,4 +245,15 @@ class OwnerController implements InitializingBean {
 			.collect(Collectors.joining(", "));
 
 	}
+
+
+	@GetMapping("/owners/{ownerId}/details")
+	@ResponseBody
+	public String details(@PathVariable("ownerId") int ownerId) {
+
+		Owner owner = this.owners.findById(ownerId);
+
+		return owner.toString();
+
+	}
 }
