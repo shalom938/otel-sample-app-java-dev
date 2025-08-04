@@ -15,14 +15,13 @@
  */
 package org.springframework.samples.petclinic.owner;
 
-import java.util.List;
-
-import org.springframework.data.domain.Page;
+import java.util.List;import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 /**
  * Repository class for <code>Owner</code> domain objects All method names are compliant
@@ -34,8 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @author Michael Isvy
- */
-public interface OwnerRepository extends Repository<Owner, Integer> {
+ */public interface OwnerRepository extends Repository<Owner, Integer> {
 
 	/**
 	 * Retrieve all {@link PetType}s from the data store.
@@ -55,16 +53,14 @@ public interface OwnerRepository extends Repository<Owner, Integer> {
 
 	@Query("SELECT DISTINCT owner FROM Owner owner left join  owner.pets WHERE owner.lastName LIKE :lastName% ")
 	@Transactional(readOnly = true)
-	Page<Owner> findByLastName(@Param("lastName") String lastName, Pageable pageable);
-
-	/**
+	Page<Owner> findByLastName(@Param("lastName") String lastName, Pageable pageable);/**
 	 * Retrieve an {@link Owner} from the data store by id.
 	 * @param id the id to search for
 	 * @return the {@link Owner} if found
 	 */
 	@Query("SELECT owner FROM Owner owner left join fetch owner.pets WHERE owner.id =:id")
 	@Transactional(readOnly = true)
-	Owner findById(@Param("id") Integer id);
+	Optional<Owner> findById(@Param("id") Integer id);
 
 	/**
 	 * Save an {@link Owner} to the data store, either inserting or updating it.
