@@ -253,6 +253,10 @@ class OwnerController implements InitializingBean {
 
 		Owner owner = this.owners.findById(ownerId);
 
+		if (owner == null) {
+			throw new RuntimeException("Owner not found with id: " + ownerId);
+		}
+
 		return owner.toString();
 
 	}
