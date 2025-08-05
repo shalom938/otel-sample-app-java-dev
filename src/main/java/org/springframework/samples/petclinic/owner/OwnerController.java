@@ -18,7 +18,9 @@ package org.springframework.samples.petclinic.owner;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;import io.opentelemetry.api.OpenTelemetry;
+import java.util.stream.Collectors;
+
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.api.trace.Tracer;
@@ -28,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.samples.petclinic.domain.OwnerValidation;
 import org.springframework.stereotype.Controller;
@@ -36,16 +37,18 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.ModelAndView;
 
-import jakarta.validation.Valid;/**
+import jakarta.validation.Valid;
+
+/**
  * @author Juergen Hoeller
  * @author Ken Krebs
  * @author Arjen Poutsma
  * @author Michael Isvy
  */
-@Controllerclass OwnerController implements InitializingBean {
+@Controller
+class OwnerController implements InitializingBean {
 
 	private static final String VIEWS_OWNER_CREATE_OR_UPDATE_FORM = "owners/createOrUpdateOwnerForm";
 
@@ -78,7 +81,9 @@ import jakarta.validation.Valid;/**
 	@InitBinder
 	public void setAllowedFields(WebDataBinder dataBinder) {
 		dataBinder.setDisallowedFields("id");
-	}@ModelAttribute("owner")
+	}
+
+	@ModelAttribute("owner")
 	public Owner findOwner(@PathVariable(name = "ownerId", required = false) Integer ownerId) {
 		return ownerId == null ? new Owner() : this.owners.findById(ownerId);
 	}
@@ -106,7 +111,9 @@ import jakarta.validation.Valid;/**
 		this.owners.save(owner);
 		validator.ValidateUserAccess("admin", "pwd", "fullaccess");
 		return "redirect:/owners/" + owner.getId();
-	}@GetMapping("/owners/find")
+	}
+
+	@GetMapping("/owners/find")
 	public String initFindForm() {
 		return "owners/findOwners";
 	}
@@ -134,7 +141,9 @@ import jakarta.validation.Valid;/**
 			// 1 owner found
 			owner = ownersResults.iterator().next();
 			return "redirect:/owners/" + owner.getId();
-		}// multiple owners found
+		}
+
+		// multiple owners found
 		return addPaginationModel(page, model, ownersResults);
 	}
 
@@ -155,7 +164,9 @@ import jakarta.validation.Valid;/**
 		int pageSize = 5;
 		Pageable pageable = PageRequest.of(page - 1, pageSize);
 		return owners.findByLastName(lastname, pageable);
-	}@GetMapping("/owners/{ownerId}/edit")
+	}
+
+	@GetMapping("/owners/{ownerId}/edit")
 	public String initUpdateOwnerForm(@PathVariable("ownerId") int ownerId, Model model) {
 		Owner owner = this.owners.findById(ownerId);
 		var petCount = ownerRepository.countPets(owner.getId());
@@ -185,7 +196,9 @@ import jakarta.validation.Valid;/**
 		owner.setId(ownerId);
 		validator.checkOwnerValidity(owner);
 
-		validator.ValidateOwnerWithExternalService(owner);validator.PerformValidationFlow(owner);
+		validator.ValidateOwnerWithExternalService(owner);
+
+		validator.PerformValidationFlow(owner);
 		this.owners.save(owner);
 		return "redirect:/owners/{ownerId}";
 	}
@@ -201,9 +214,6 @@ import jakarta.validation.Valid;/**
 
 		ModelAndView mav = new ModelAndView("owners/ownerDetails");
 		Owner owner = this.owners.findById(ownerId);
-		if (owner == null) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found");
-		}
 		validator.ValidateOwnerWithExternalService(owner);
 
 		mav.addObject(owner);
@@ -215,7 +225,9 @@ import jakarta.validation.Valid;/**
 	public String getOwnerPetsMap(@PathVariable("ownerId") int ownerId) {
 		String sql = "SELECT p.id AS pet_id, p.owner_id AS owner_id FROM pets p JOIN owners o ON p.owner_id = o.id";
 
-		List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);Map<Integer, List<Integer>> ownerToPetsMap = rows.stream()
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
+
+		Map<Integer, List<Integer>> ownerToPetsMap = rows.stream()
 			.collect(Collectors.toMap(
 				row -> (Integer) row.get("owner_id"),
 				row -> List.of((Integer) row.get("pet_id"))  // Immutable list
@@ -240,9 +252,6 @@ import jakarta.validation.Valid;/**
 	public String details(@PathVariable("ownerId") int ownerId) {
 
 		Owner owner = this.owners.findById(ownerId);
-		if (owner == null) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found");
-		}
 
 		return owner.toString();
 
