@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.samples.petclinic.owner;
-
-import static org.hamcrest.Matchers.empty;
+package org.springframework.samples.petclinic.owner;import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
@@ -31,9 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.time.LocalDate;
-import java.util.List;
-
-import org.assertj.core.util.Lists;
+import java.util.List;import org.assertj.core.util.Lists;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +43,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 /**
  * Test class for {@link OwnerController}
@@ -54,10 +56,10 @@ import org.springframework.test.web.servlet.MockMvc;
  * @author Colin But
  */
 @WebMvcTest(OwnerController.class)
-@DisabledInNativeImage
-class OwnerControllerTests {
+@DisabledInNativeImageclass OwnerControllerTests {
 
 	private static final int TEST_OWNER_ID = 1;
+	private static final int NONEXISTENT_OWNER_ID = 99;
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -86,18 +88,18 @@ class OwnerControllerTests {
 
 	@BeforeEach
 	void setup() {
-
 		Owner george = george();
 		given(this.owners.findByLastName(eq("Franklin"), any(Pageable.class)))
 			.willReturn(new PageImpl<Owner>(Lists.newArrayList(george)));
 
 		given(this.owners.findAll(any(Pageable.class))).willReturn(new PageImpl<Owner>(Lists.newArrayList(george)));
 
-		given(this.owners.findById(TEST_OWNER_ID)).willReturn(george);
+		given(this.owners.findById(TEST_OWNER_ID)).willReturn(Optional.of(george));
+		given(this.owners.findById(NONEXISTENT_OWNER_ID)).willReturn(Optional.empty());
+	}given(this.owners.findById(TEST_OWNER_ID)).willReturn(george);
 		Visit visit = new Visit();
 		visit.setDate(LocalDate.now());
 		george.getPet("Max").getVisits().add(visit);
-
 	}
 
 	@Test
@@ -120,6 +122,20 @@ class OwnerControllerTests {
 	}
 
 	@Test
+	void testGetOwnerNotFound() throws Exception {
+		given(this.owners.findById(anyLong())).willReturn(null);
+		mockMvc.perform(get("/owners/999"))
+			.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void testGetOwnerSuccess() throws Exception {
+		given(this.owners.findById(TEST_OWNER_ID)).willReturn(george);
+		mockMvc.perform(get("/owners/" + TEST_OWNER_ID))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("owner", hasProperty("lastName", is("Franklin"))))
+			.andExpect(view().name("owners/ownerDetails"));
+	}@Test
 	void testProcessCreationFormHasErrors() throws Exception {
 		mockMvc
 			.perform(post("/owners/new").param("firstName", "Joe").param("lastName", "Bloggs").param("city", "London"))
@@ -139,22 +155,50 @@ class OwnerControllerTests {
 	}
 
 	@Test
-	void testProcessFindFormSuccess() throws Exception {
-		Page<Owner> tasks = new PageImpl<Owner>(Lists.newArrayList(george(), new Owner()));
-		Mockito.when(this.owners.findByLastName(anyString(), any(Pageable.class))).thenReturn(tasks);
-		mockMvc.perform(get("/owners?page=1")).andExpect(status().isOk()).andExpect(view().name("owners/ownersList"));
+	void testGetOwnerNotFound() throws Exception {
+		mockMvc.perform(get("/owners/99999"))
+			.andExpect(status().isNotFound());
 	}
 
 	@Test
-	void testProcessFindFormByLastName() throws Exception {
-		Page<Owner> tasks = new PageImpl<Owner>(Lists.newArrayList(george()));
-		Mockito.when(this.owners.findByLastName(eq("Franklin"), any(Pageable.class))).thenReturn(tasks);
-		mockMvc.perform(get("/owners?page=1").param("lastName", "Franklin"))
-			.andExpect(status().is3xxRedirection())
-			.andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID));
-	}
+	void testGetOwnerSuccess() throws Exception {
+		given(this.clinicService.findOwnerById(1)).willReturn(new Owner());
+		mockMvc.perform(get("/owners/1"))
+			.andExpect(status().isOk())
+			.andExpect(model().attributeExists("owner"))
+			.andExpect(view().name("owners/ownerDetails"));
+	}@Test
+void testProcessFindFormSuccess() throws Exception {
+	Page<Owner> tasks = new PageImpl<Owner>(Lists.newArrayList(george(), new Owner()));
+	Mockito.when(this.owners.findByLastName(anyString(), any(Pageable.class))).thenReturn(tasks);
+	mockMvc.perform(get("/owners?page=1")).andExpect(status().isOk()).andExpect(view().name("owners/ownersList"));
+}
 
-	@Test
+@Test
+void testProcessFindFormByLastName() throws Exception {
+	Page<Owner> tasks = new PageImpl<Owner>(Lists.newArrayList(george()));
+	Mockito.when(this.owners.findByLastName(eq("Franklin"), any(Pageable.class))).thenReturn(tasks);
+	mockMvc.perform(get("/owners?page=1").param("lastName", "Franklin"))
+		.andExpect(status().is3xxRedirection())
+		.andExpect(view().name("redirect:/owners/" + TEST_OWNER_ID));
+}
+
+@Test
+void testGetOwnerNotFound() throws Exception {
+	Mockito.when(this.owners.findById(999)).thenReturn(Optional.empty());
+	mockMvc.perform(get("/owners/999"))
+		.andExpect(status().isNotFound());
+}
+
+@Test
+void testGetOwnerSuccess() throws Exception {
+	Owner owner = george();
+	Mockito.when(this.owners.findById(TEST_OWNER_ID)).thenReturn(Optional.of(owner));
+	mockMvc.perform(get("/owners/" + TEST_OWNER_ID))
+		.andExpect(status().isOk())
+		.andExpect(view().name("owners/ownerDetails"))
+		.andExpect(model().attribute("owner", owner));
+}@Test
 	void testProcessFindFormNoOwnersFound() throws Exception {
 		Page<Owner> tasks = new PageImpl<Owner>(Lists.newArrayList());
 		Mockito.when(this.owners.findByLastName(eq("Unknown Surname"), any(Pageable.class))).thenReturn(tasks);
@@ -163,10 +207,28 @@ class OwnerControllerTests {
 			.andExpect(model().attributeHasFieldErrors("owner", "lastName"))
 			.andExpect(model().attributeHasFieldErrorCode("owner", "lastName", "notFound"))
 			.andExpect(view().name("owners/findOwners"));
-
 	}
 
 	@Test
+	void testGetOwnerNotFound() throws Exception {
+		Mockito.when(this.owners.findById(999)).thenReturn(Optional.empty());
+		mockMvc.perform(get("/owners/999"))
+			.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void testGetOwnerSuccess() throws Exception {
+		Owner owner = new Owner();
+		owner.setId(1);
+		owner.setFirstName("George");
+		owner.setLastName("Franklin");
+	
+		Mockito.when(this.owners.findById(1)).thenReturn(Optional.of(owner));
+		mockMvc.perform(get("/owners/1"))
+			.andExpect(status().isOk())
+			.andExpect(model().attribute("owner", owner))
+			.andExpect(view().name("owners/ownerDetails"));
+	}@Test
 	void testInitUpdateOwnerForm() throws Exception {
 		mockMvc.perform(get("/owners/{ownerId}/edit", TEST_OWNER_ID))
 			.andExpect(status().isOk())
@@ -177,9 +239,7 @@ class OwnerControllerTests {
 			.andExpect(model().attribute("owner", hasProperty("city", is("Madison"))))
 			.andExpect(model().attribute("owner", hasProperty("telephone", is("6085551023"))))
 			.andExpect(view().name("owners/createOrUpdateOwnerForm"));
-	}
-
-	@Test
+	}@Test
 	void testProcessUpdateOwnerFormSuccess() throws Exception {
 		mockMvc
 			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe")
@@ -196,9 +256,7 @@ class OwnerControllerTests {
 		mockMvc.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(view().name("redirect:/owners/{ownerId}"));
-	}
-
-	@Test
+	}@Test
 	void testProcessUpdateOwnerFormHasErrors() throws Exception {
 		mockMvc
 			.perform(post("/owners/{ownerId}/edit", TEST_OWNER_ID).param("firstName", "Joe")
@@ -210,32 +268,41 @@ class OwnerControllerTests {
 			.andExpect(model().attributeHasFieldErrors("owner", "address"))
 			.andExpect(model().attributeHasFieldErrors("owner", "telephone"))
 			.andExpect(view().name("owners/createOrUpdateOwnerForm"));
-	}
+	}@Test
+void testShowOwner() throws Exception {
+	mockMvc.perform(get("/owners/{ownerId}", TEST_OWNER_ID))
+		.andExpect(status().isOk())
+		.andExpect(model().attribute("owner", hasProperty("lastName", is("Franklin"))))
+		.andExpect(model().attribute("owner", hasProperty("firstName", is("George"))))
+		.andExpect(model().attribute("owner", hasProperty("address", is("110 W. Liberty St."))))
+		.andExpect(model().attribute("owner", hasProperty("city", is("Madison"))))
+		.andExpect(model().attribute("owner", hasProperty("telephone", is("6085551023"))))
+		.andExpect(model().attribute("owner", hasProperty("pets", not(empty()))))
+		.andExpect(model().attribute("owner", hasProperty("pets", new BaseMatcher<List<Pet>>() {
 
-	@Test
-	void testShowOwner() throws Exception {
-		mockMvc.perform(get("/owners/{ownerId}", TEST_OWNER_ID))
-			.andExpect(status().isOk())
-			.andExpect(model().attribute("owner", hasProperty("lastName", is("Franklin"))))
-			.andExpect(model().attribute("owner", hasProperty("firstName", is("George"))))
-			.andExpect(model().attribute("owner", hasProperty("address", is("110 W. Liberty St."))))
-			.andExpect(model().attribute("owner", hasProperty("city", is("Madison"))))
-			.andExpect(model().attribute("owner", hasProperty("telephone", is("6085551023"))))
-			.andExpect(model().attribute("owner", hasProperty("pets", not(empty()))))
-			.andExpect(model().attribute("owner", hasProperty("pets", new BaseMatcher<List<Pet>>() {
-
-				@Override
-				public boolean matches(Object item) {
-					@SuppressWarnings("unchecked")
-					List<Pet> pets = (List<Pet>) item;
-					Pet pet = pets.get(0);
-					if (pet.getVisits().isEmpty()) {
-						return false;
-					}
-					return true;
+			@Override
+			public boolean matches(Object item) {
+				@SuppressWarnings("unchecked")
+				List<Pet> pets = (List<Pet>) item;
+				Pet pet = pets.get(0);
+				if (pet.getVisits().isEmpty()) {
+					return false;
 				}
+				return true;
+			}
 
-				@Override
+			@Override
+			public void describeTo(Description description) {
+				description.appendText("pets with visits");
+			}
+		})));
+}
+
+@Test
+void testShowNonExistentOwner() throws Exception {
+	mockMvc.perform(get("/owners/{ownerId}", 999))
+		.andExpect(status().isNotFound());
+}@Override
 				public void describeTo(Description description) {
 					description.appendText("Max did not have any visits");
 				}
