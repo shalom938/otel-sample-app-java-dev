@@ -6,22 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Service;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 import javax.annotation.PreDestroy;
 
-@Servicepackage org.springframework.samples.petclinic.errors;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.SmartLifecycle;
-import org.springframework.stereotype.Service;
-
-import javax.annotation.PreDestroy;
-
-@Service
-public class MonitorService implements SmartLifecycle {
+@Servicepublic class MonitorService implements SmartLifecycle {
     private static final Logger logger = LoggerFactory.getLogger(MonitorService.class);
     private final Tracer tracer;
     private volatile boolean running = false;
@@ -29,22 +18,29 @@ public class MonitorService implements SmartLifecycle {
 
     public MonitorService(Tracer tracer) {
         this.tracer = tracer;
-    }
-
-    @Override
+    }@Override
     public void start() {
         if (running) {
             return;
         }
         running = true;
         backgroundThread = new Thread(() -> {
+            CircuitBreaker circuitBreaker = CircuitBreaker.ofDefaults("monitorService");
             while (running) {
                 try {
                     Span span = tracer.spanBuilder("monitor").startSpan();
                     try {
-                        // Actual monitoring logic here instead of throwing test exception
-                        logger.debug("Monitoring service running...");
-                        Thread.sleep(5000);
+                        circuitBreaker.executeRunnable(() -> {
+                            try {
+                                // Actual monitoring logic here
+                                checkSystemHealth();
+                                logger.debug("Monitoring service running...");
+                                Thread.sleep(5000);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                throw new RuntimeException(e);
+                            }
+                        });
                     } catch (Exception e) {
                         span.recordException(e);
                         logger.error("Monitor operation failed", e);
@@ -57,11 +53,8 @@ public class MonitorService implements SmartLifecycle {
                 }
             }
         });
-        backgroundThread.start();
-        logger.info("Monitor service started");
-    }
-
-    @Override
+        backgroundThread.start();logger.info("Monitor service started");
+    }@Override
     public void stop() {
         running = false;
         if (backgroundThread != null) {
@@ -97,9 +90,7 @@ public class MonitorService implements SmartLifecycle {
     @Override
     public int getPhase() {
         return Integer.MAX_VALUE;
-    }
-
-    @PreDestroy
+    }@PreDestroy
     public void destroy() {
         stop();
     }
@@ -139,9 +130,7 @@ public class MonitorService implements SmartLifecycle {
     @Override
     public int getPhase() {
         return Integer.MAX_VALUE;
-    }
-
-    @PreDestroy
+    }@PreDestroy
     public void destroy() {
         stop();
     }
