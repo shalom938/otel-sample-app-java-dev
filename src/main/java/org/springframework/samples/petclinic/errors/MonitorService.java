@@ -1,77 +1,136 @@
 package org.springframework.samples.petclinic.errors;
 
-import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.opentelemetry.api.trace.Tracer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
-import java.util.InvalidPropertiesFormatException;
+import javax.annotation.PreDestroy;
 
-@Component
-public class MonitorService implements SmartLifecycle {
+@Servicepublic class MonitorService implements SmartLifecycle {
+    private static final Logger logger = LoggerFactory.getLogger(MonitorService.class);
+    private final Tracer tracer;
+    private volatile boolean running = false;
+    private Thread backgroundThread;
 
-	private boolean running = false;
-	private Thread backgroundThread;
-	@Autowired
-	private OpenTelemetry openTelemetry;
+    public MonitorService(Tracer tracer) {
+        this.tracer = tracer;
+    }@Override
+    public void start() {
+        if (running) {
+            return;
+        }
+        running = true;
+        backgroundThread = new Thread(() -> {
+            CircuitBreaker circuitBreaker = CircuitBreaker.ofDefaults("monitorService");
+            while (running) {
+                try {
+                    Span span = tracer.spanBuilder("monitor").startSpan();
+                    try {
+                        circuitBreaker.executeRunnable(() -> {
+                            try {
+                                // Actual monitoring logic here
+                                checkSystemHealth();
+                                logger.debug("Monitoring service running...");
+                                Thread.sleep(5000);
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                                throw new RuntimeException(e);
+                            }
+                        });
+                    } catch (Exception e) {
+                        span.recordException(e);
+                        logger.error("Monitor operation failed", e);
+                    } finally {
+                        span.end();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        });
+        backgroundThread.start();logger.info("Monitor service started");
+    }@Override
+    public void stop() {
+        running = false;
+        if (backgroundThread != null) {
+            try {
+                backgroundThread.join(5000);
+                if (backgroundThread.isAlive()) {
+                    backgroundThread.interrupt();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Failed to stop monitor service", e);
+            }
+        }
+        logger.info("Monitor service stopped");
+    }
 
-	@Override
-	public void start() {
-		var otelTracer = openTelemetry.getTracer("MonitorService");
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
 
-		running = true;
-		backgroundThread = new Thread(() -> {
-			while (running) {
+    @Override
+    public boolean isAutoStartup() {
+        return true;
+    }
 
-				try {
-					Thread.sleep(5000);
-				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
-				}
-				Span span = otelTracer.spanBuilder("monitor").startSpan();
+    @Override
+    public void stop(Runnable callback) {
+        stop();
+        callback.run();
+    }
 
-				try {
+    @Override
+    public int getPhase() {
+        return Integer.MAX_VALUE;
+    }@PreDestroy
+    public void destroy() {
+        stop();
+    }
+}    @Override
+    public void stop() {
+        running = false;
+        if (backgroundThread != null) {
+            try {
+                backgroundThread.join(5000);
+                if (backgroundThread.isAlive()) {
+                    backgroundThread.interrupt();
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Failed to stop monitor service", e);
+            }
+        }
+        logger.info("Monitor service stopped");
+    }
 
-					System.out.println("Background service is running...");
-					monitor();
-				} catch (Exception e) {
-					span.recordException(e);
-					span.setStatus(StatusCode.ERROR);
-				} finally {
-					span.end();
-				}
-			}
-		});
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
 
-		// Start the background thread
-		backgroundThread.start();
-		System.out.println("Background service started.");
-	}
+    @Override
+    public boolean isAutoStartup() {
+        return true;
+    }
 
-	private void monitor() throws InvalidPropertiesFormatException {
-		Utils.throwException(IllegalStateException.class,"monitor failure");
-	}
+    @Override
+    public void stop(Runnable callback) {
+        stop();
+        callback.run();
+    }
 
-
-
-	@Override
-	public void stop() {
-		// Stop the background task
-		running = false;
-		if (backgroundThread != null) {
-			try {
-				backgroundThread.join(); // Wait for the thread to finish
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
-		System.out.println("Background service stopped.");
-	}
-
-	@Override
-	public boolean isRunning() {
-		return false;
-	}
-}
+    @Override
+    public int getPhase() {
+        return Integer.MAX_VALUE;
+    }@PreDestroy
+    public void destroy() {
+        stop();
+    }
